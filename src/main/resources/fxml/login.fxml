@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.salonmanagementsystem.controllers.LoginController"
+      spacing="10"
+      alignment="CENTER">
+
+    <Label text="Salon Management System"/>
+
+    <Button text="Login"
+            onAction="#handleLogin"/>
+
+    <Label fx:id="statusLabel"/>
+
+</VBox>
