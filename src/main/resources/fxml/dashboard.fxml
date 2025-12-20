@@ -1,14 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
+<BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.DashboardController"
-            prefHeight="400.0" prefWidth="600.0">
+            style="-fx-background-color: linear-gradient(to bottom right, #e0e0eb, #c8c8d8);">
 
-</AnchorPane>
+    <top>
+        <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-padding: 20;">
+            <Text text="Dashboard" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-fill: #333333;" />
+        </HBox>
+    </top>
+
+    <left>
+        <VBox spacing="15" style="-fx-padding: 20;" alignment="TOP_CENTER">
+            <Button text="Clients" onAction="#openClients" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+            <Button text="Employees" onAction="#openEmployees" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+            <Button text="Services" onAction="#openServices" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+            <Button text="Appointments" onAction="#openAppointments" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+            <Button text="Payments" onAction="#openPayments" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+            <Button text="Reports" onAction="#openReports" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+            <Button text="Settings" onAction="#openSettings" maxWidth="150" style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 12;" />
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="mainContainer" style="-fx-padding: 20; -fx-background-color: #ffffffcc; -fx-background-radius: 20;" />
+    </center>
+
+</BorderPane>

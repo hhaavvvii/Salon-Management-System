@@ -1,12 +1,75 @@
 package com.example.salonmanagementsystem.controllers;
 
-import javafx.event.ActionEvent;
+import com.example.salonmanagementsystem.model.Role;
+import com.example.salonmanagementsystem.model.User;
+import com.example.salonmanagementsystem.service.AuthService;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.stage.Stage;
 
 public class LoginController {
-    public void initialize() {
-        // UI init
+
+    @FXML
+    private TextField usernameField;
+
+    @FXML
+    private PasswordField passwordField;
+
+    @FXML
+    private Label errorLabel;
+
+    private final AuthService authService = new AuthService();
+
+    @FXML
+    private void handleLogin() {
+        String username = usernameField.getText();
+        String password = passwordField.getText();
+
+        // ✅ исправлено условие
+        if (username == null || username.isBlank()
+                || password == null || password.isBlank()) {
+            showError("Please enter username and password");
+            return;
+        }
+
+        try {
+            User user = authService.login(username, password);
+
+            if (user == null) {
+                showError("Invalid username or password");
+                return;
+            }
+
+            errorLabel.setVisible(false); // ✅ скрываем ошибку при успехе
+            openDashboard(user.getRole());
+
+        } catch (Exception e) {
+            showError("Login error. Please try again later");
+            e.printStackTrace();
+        }
     }
 
-    public void handleLogin(ActionEvent actionEvent) {
+    private void openDashboard(Role role) throws Exception {
+        FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/fxml/dashboard.fxml")
+        );
+
+        Parent root = loader.load();
+
+        Stage stage = (Stage) usernameField.getScene().getWindow();
+        stage.setScene(new Scene(root));
+        stage.setMaximized(true);
+    }
+
+    private void showError(String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setVisible(true);
+        }
     }
 }
