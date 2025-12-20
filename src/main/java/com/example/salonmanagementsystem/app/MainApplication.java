@@ -9,13 +9,17 @@ public class MainApplication extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+
         FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/fxml/login.fxml")
         );
 
-        Scene scene = new Scene(loader.load(), 400, 300);
+        Scene scene = new Scene(loader.load());
+
         stage.setTitle("Salon Management System");
         stage.setScene(scene);
+
+        stage.setMaximized(true);
         stage.show();
     }
 }
