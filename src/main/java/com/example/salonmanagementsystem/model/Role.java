@@ -1,4 +1,6 @@
 package com.example.salonmanagementsystem.model;
 
-public class Role {
+public enum Role {
+    ADMIN,
+    EMPLOYEE
 }
