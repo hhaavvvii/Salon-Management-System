@@ -9,10 +9,15 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 public class LoginController {
+
+    @FXML private RadioButton adminRadio;
+
+    @FXML private RadioButton masterRadio;
 
     @FXML
     private TextField usernameField;
@@ -36,6 +41,7 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
+
         // базовая UI-проверка (дублирование допустимо)
         if (username == null || username.isBlank()
                 || password == null || password.isBlank()) {
@@ -43,8 +49,16 @@ public class LoginController {
             return;
         }
 
-        // TODO: получить роль из UI (RadioButton / ChoiceBox)
-        Role selectedRole = Role.ADMIN; // временно, заменить на реальный выбор
+        Role selectedRole;
+
+        if (adminRadio.isSelected()) {
+            selectedRole = Role.ADMIN;
+        } else if (masterRadio.isSelected()) {
+            selectedRole = Role.MASTER;
+        } else {
+            showError("Please select role");
+            return;
+        }
 
         try {
             authService.login(username, password, selectedRole);

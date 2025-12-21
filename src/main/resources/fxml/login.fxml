@@ -10,41 +10,84 @@
            fx:controller="com.example.salonmanagementsystem.controllers.LoginController"
            style="-fx-background-color: linear-gradient(to bottom right, #e0e0eb, #c8c8d8);">
 
-    <VBox spacing="28"
+    <fx:define>
+        <ToggleGroup fx:id="roleGroup"/>
+    </fx:define>
+
+    <VBox spacing="24"
           alignment="CENTER"
           maxWidth="460"
-          style="-fx-background-color: #ffffffcc; -fx-background-radius: 30; -fx-padding: 60; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 30, 0.2, 0, 12);">
+          style="-fx-background-color: #ffffffcc;
+                 -fx-background-radius: 30;
+                 -fx-padding: 60;
+                 -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 30, 0.2, 0, 12);">
 
+        <!-- TITLE -->
         <Text text="Salon Management System"
-              style="-fx-font-size: 30px; -fx-font-weight: bold; -fx-fill: #333333; -fx-font-family: 'Verdana';"
+              style="-fx-font-size: 30px;
+                     -fx-font-weight: bold;
+                     -fx-fill: #333333;
+                     -fx-font-family: 'Verdana';"
               wrappingWidth="380"
-              textAlignment="CENTER" />
+              textAlignment="CENTER"/>
 
-        <Text text="Sign in to continue"
+        <Text text="Choose role and sign in"
               fill="#555555"
-              style="-fx-font-size: 15px; -fx-font-family: 'Arial';" />
+              style="-fx-font-size: 15px;"/>
 
+        <!-- ROLE SELECTION -->
+        <VBox spacing="10" alignment="CENTER">
+            <Text text="Login as"
+                  style="-fx-font-size: 14px; -fx-fill: #444;"/>
+
+            <HBox spacing="20" alignment="CENTER">
+                <RadioButton fx:id="adminRadio"
+                             text="Administrator"
+                             toggleGroup="$roleGroup"/>
+
+                <RadioButton fx:id="masterRadio"
+                             text="Master"
+                             toggleGroup="$roleGroup"/>
+            </HBox>
+        </VBox>
+
+        <!-- USERNAME -->
         <TextField fx:id="usernameField"
                    promptText="Username"
-                   style="-fx-background-radius: 18; -fx-padding: 14; -fx-border-color: #a8a8c0; -fx-border-radius: 18;"
-                   maxWidth="320" />
+                   maxWidth="320"
+                   style="-fx-background-radius: 18;
+                          -fx-padding: 14;
+                          -fx-border-color: #a8a8c0;
+                          -fx-border-radius: 18;"/>
 
+        <!-- PASSWORD -->
         <PasswordField fx:id="passwordField"
                        promptText="Password"
-                       style="-fx-background-radius: 18; -fx-padding: 14; -fx-border-color: #a8a8c0; -fx-border-radius: 18;"
-                       maxWidth="320" />
+                       maxWidth="320"
+                       style="-fx-background-radius: 18;
+                              -fx-padding: 14;
+                              -fx-border-color: #a8a8c0;
+                              -fx-border-radius: 18;"/>
 
+        <!-- LOGIN BUTTON -->
         <Button text="Login"
                 onAction="#handleLogin"
                 maxWidth="320"
-                style="-fx-background-color: #8a8ac2; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 18; -fx-padding: 14; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0.1, 0, 3);" />
+                style="-fx-background-color: #8a8ac2;
+                       -fx-text-fill: white;
+                       -fx-font-size: 16px;
+                       -fx-font-weight: bold;
+                       -fx-background-radius: 18;
+                       -fx-padding: 14;
+                       -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0.1, 0, 3);"/>
 
+        <!-- ERROR -->
         <Label fx:id="errorLabel"
                visible="false"
                textFill="#e74c3c"
                wrapText="true"
                alignment="CENTER"
-               style="-fx-font-size: 14px;" />
+               style="-fx-font-size: 14px;"/>
 
     </VBox>
 </StackPane>
