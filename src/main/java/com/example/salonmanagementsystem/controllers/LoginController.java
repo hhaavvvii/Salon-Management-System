@@ -1,7 +1,7 @@
 package com.example.salonmanagementsystem.controllers;
 
+import com.example.salonmanagementsystem.exceptions.AuthException;
 import com.example.salonmanagementsystem.model.Role;
-import com.example.salonmanagementsystem.model.User;
 import com.example.salonmanagementsystem.service.AuthService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,53 +23,60 @@ public class LoginController {
     @FXML
     private Label errorLabel;
 
-    private final AuthService authService = new AuthService();
+    // AuthService ПЕРЕДАЁТСЯ извне (например, из Application)
+    private AuthService authService;
+
+    // setter-инъекция (подходит для JavaFX)
+    public void setAuthService(AuthService authService) {
+        this.authService = authService;
+    }
 
     @FXML
     private void handleLogin() {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // ✅ исправлено условие
+        // базовая UI-проверка (дублирование допустимо)
         if (username == null || username.isBlank()
                 || password == null || password.isBlank()) {
             showError("Please enter username and password");
             return;
         }
 
+        // TODO: получить роль из UI (RadioButton / ChoiceBox)
+        Role selectedRole = Role.ADMIN; // временно, заменить на реальный выбор
+
         try {
-            User user = authService.login(username, password);
+            authService.login(username, password, selectedRole);
 
-            if (user == null) {
-                showError("Invalid username or password");
-                return;
-            }
+            errorLabel.setVisible(false);
+            openDashboard(selectedRole);
 
-            errorLabel.setVisible(false); // ✅ скрываем ошибку при успехе
-            openDashboard(user.getRole());
+        } catch (AuthException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private void openDashboard(Role role) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/dashboard.fxml")
+            );
+
+            Parent root = loader.load();
+
+            Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setMaximized(true);
 
         } catch (Exception e) {
-            showError("Login error. Please try again later");
+            showError("Failed to open dashboard");
             e.printStackTrace();
         }
     }
 
-    private void openDashboard(Role role) throws Exception {
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/fxml/dashboard.fxml")
-        );
-
-        Parent root = loader.load();
-
-        Stage stage = (Stage) usernameField.getScene().getWindow();
-        stage.setScene(new Scene(root));
-        stage.setMaximized(true);
-    }
-
     private void showError(String message) {
-        if (errorLabel != null) {
-            errorLabel.setText(message);
-            errorLabel.setVisible(true);
-        }
+        errorLabel.setText(message);
+        errorLabel.setVisible(true);
     }
 }

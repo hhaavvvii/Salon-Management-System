@@ -1,4 +1,9 @@
 package com.example.salonmanagementsystem.dao;
 
-public class UserDao {
+import com.example.salonmanagementsystem.model.User;
+
+import java.util.Optional;
+
+public interface UserDao {
+    Optional<User> findByLogin(String login);
 }
