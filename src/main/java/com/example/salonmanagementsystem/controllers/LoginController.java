@@ -1,8 +1,12 @@
 package com.example.salonmanagementsystem.controllers;
 
+import com.example.salonmanagementsystem.app.SessionContext;
+import com.example.salonmanagementsystem.dao.impl.UserDaoImpl;
 import com.example.salonmanagementsystem.exceptions.AuthException;
 import com.example.salonmanagementsystem.model.Role;
+import com.example.salonmanagementsystem.model.User;
 import com.example.salonmanagementsystem.service.AuthService;
+import com.example.salonmanagementsystem.util.PasswordUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -28,6 +32,19 @@ public class LoginController {
     @FXML
     private Label errorLabel;
 
+
+    @FXML
+    public void initialize() {
+        this.authService = new AuthService(
+                new UserDaoImpl(),
+                new PasswordUtil()
+        );
+
+        SessionContext.clear();
+    }
+
+
+
     // AuthService ПЕРЕДАЁТСЯ извне (например, из Application)
     private AuthService authService;
 
@@ -41,16 +58,15 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-
-        // базовая UI-проверка (дублирование допустимо)
+        // базовая UI-проверка
         if (username == null || username.isBlank()
                 || password == null || password.isBlank()) {
             showError("Please enter username and password");
             return;
         }
 
+        // роль выбирается для валидации, но не для установки
         Role selectedRole;
-
         if (adminRadio.isSelected()) {
             selectedRole = Role.ADMIN;
         } else if (masterRadio.isSelected()) {
@@ -61,15 +77,22 @@ public class LoginController {
         }
 
         try {
-            authService.login(username, password, selectedRole);
+            // 🔹 AuthService возвращает пользователя
+            User user = authService.login(username, password, selectedRole);
+
+            // 🔹 сохраняем пользователя в session
+            SessionContext.setCurrentUser(user);
 
             errorLabel.setVisible(false);
-            openDashboard(selectedRole);
+
+            // 🔹 открываем dashboard по реальной роли пользователя
+            openDashboard(user.getRole());
 
         } catch (AuthException e) {
             showError(e.getMessage());
         }
     }
+
 
     private void openDashboard(Role role) {
         try {
@@ -81,7 +104,9 @@ public class LoginController {
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
             stage.setScene(new Scene(root));
-            stage.setMaximized(true);
+            stage.setResizable(true);
+            stage.setMaximized(false);
+
 
         } catch (Exception e) {
             showError("Failed to open dashboard");
