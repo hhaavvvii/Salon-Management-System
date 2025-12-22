@@ -19,26 +19,29 @@ public class AuthService {
 
 
 
-    public void login(String login, String password, Role role){
-        //temporary validation
+    public User login(String username, String password, Role role) {
+        if (username == null || username.isBlank()) {
+            throw new AuthException("Username is empty");
+        }
+        if (password == null || password.isBlank()) {
+            throw new AuthException("Password is empty");
+        }
+        if (role == null) {
+            throw new AuthException("Role is not selected");
+        }
 
-        if (login == null || login.isBlank()) throw new AuthException("Login is required");
-        if (password == null || password.isBlank()) throw new AuthException("password is required");
-        if (role == null) throw new AuthException("role is not selected");
+        User user = userDao.findByLogin(username)
+                .orElseThrow(() -> new AuthException("User not found"));
 
-        //searching the user
-        Optional<User> optionalUser = userDao.findByLogin(login);
+        if (user.getRole() != role) {
+            throw new AuthException("Invalid role selected");
+        }
 
-        if (optionalUser.isEmpty()) throw new AuthException("Invalid login or password");
+        if (!passwordUtil.verifyPassword(password, user.getPasswordHash())) {
+            throw new AuthException("Invalid password");
+        }
 
-        User user = optionalUser.get();
-
-        //checking password
-        if(!passwordUtil.matches(password, user.getPasswordHash())) throw new AuthException("Invalid password");
-
-        //checking role
-        if(user.getRole() != role) throw new AuthException("Invalid role");
-
-        //Success - method finished
+        return user;
     }
+
 }
