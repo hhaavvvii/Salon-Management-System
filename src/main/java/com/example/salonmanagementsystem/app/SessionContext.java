@@ -2,13 +2,9 @@ package com.example.salonmanagementsystem.app;
 
 import com.example.salonmanagementsystem.model.User;
 
-public final class SessionContext {
+public class SessionContext {
 
     private static User currentUser;
-
-    private SessionContext() {
-        // запрещаем создание экземпляров
-    }
 
     public static void setCurrentUser(User user) {
         currentUser = user;
@@ -18,11 +14,12 @@ public final class SessionContext {
         return currentUser;
     }
 
-    public static void clear() {
+    public static void clearSession() {
         currentUser = null;
     }
 
-    public static boolean isAuthenticated() {
+    // Опционально: проверка авторизации
+    public static boolean isLoggedIn() {
         return currentUser != null;
     }
 }

@@ -9,4 +9,5 @@ module com.example.salonmanagementsystem {
 
     opens com.example.salonmanagementsystem.app to javafx.fxml;
     opens com.example.salonmanagementsystem.controllers to javafx.fxml;
+    opens com.example.salonmanagementsystem.model to javafx.base;
 }

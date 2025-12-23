@@ -16,25 +16,27 @@ public class MainApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        // 1. Создаём backend-зависимости
+        // backend
         UserDao userDao = new UserDaoImpl();
         PasswordUtil passwordUtil = new PasswordUtil();
         AuthService authService = new AuthService(userDao, passwordUtil);
 
-        // 2. Загружаем FXML
         FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/fxml/login.fxml")
         );
 
         Parent root = loader.load();
 
-        // 3. Передаём AuthService в контроллер
         LoginController controller = loader.getController();
         controller.setAuthService(authService);
 
-        // 4. Показываем окно
+        Scene scene = new Scene(root);
+
         stage.setTitle("Salon Management System");
-        stage.setScene(new Scene(root));
+        stage.setScene(scene);
+        stage.setMinWidth(800);
+        stage.setMinHeight(600);
+        stage.setResizable(true);
         stage.show();
     }
 }

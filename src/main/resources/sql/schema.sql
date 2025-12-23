@@ -25,9 +25,11 @@ CREATE TABLE users (
 -- Clients
 CREATE TABLE clients (
                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+
                          first_name TEXT NOT NULL,
-                         last_name TEXT NOT NULL,
-                         phone TEXT,
+                         phone TEXT NOT NULL,
+
+                         last_name TEXT,
                          email TEXT,
                          notes TEXT
 );

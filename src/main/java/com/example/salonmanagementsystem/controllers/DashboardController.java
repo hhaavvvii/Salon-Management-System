@@ -1,13 +1,15 @@
 package com.example.salonmanagementsystem.controllers;
 
 import com.example.salonmanagementsystem.app.SessionContext;
-import com.example.salonmanagementsystem.model.Role;
 import com.example.salonmanagementsystem.model.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
@@ -15,9 +17,11 @@ import java.io.IOException;
 
 public class DashboardController {
 
-    @FXML
-    private StackPane mainContainer;
+    @FXML private StackPane mainContainer;
+    @FXML private Label userNameLabel;
+    @FXML private Label userRoleLabel;
 
+    // Кнопки навигации для подсветки активной
     @FXML private Button clientsButton;
     @FXML private Button employeesButton;
     @FXML private Button servicesButton;
@@ -26,97 +30,279 @@ public class DashboardController {
     @FXML private Button reportsButton;
     @FXML private Button settingsButton;
 
+    private Button activeButton = null;
+
     @FXML
     public void initialize() {
+        loadUserInfo();
+        showWelcomeScreen();
+    }
+
+    // ========== USER INFO ==========
+
+    private void loadUserInfo() {
         User currentUser = SessionContext.getCurrentUser();
 
-        if (currentUser == null) {
-            throw new IllegalStateException("No authenticated user in session");
-        }
-
-        if (currentUser.getRole() == Role.MASTER) {
-            employeesButton.setVisible(false);
-            employeesButton.setManaged(false);
-
-            reportsButton.setVisible(false);
-            reportsButton.setManaged(false);
-
-            settingsButton.setVisible(false);
-            settingsButton.setManaged(false);
-
-            paymentsButton.setVisible(false);
-            paymentsButton.setManaged(false);
+        if (currentUser != null) {
+            userNameLabel.setText(currentUser.getUsername());
+            userRoleLabel.setText("Role: " + currentUser.getRole().name());
+        } else {
+            userNameLabel.setText("Guest");
+            userRoleLabel.setText("Role: Unknown");
         }
     }
 
-    @FXML
-    private void openClients() throws IOException {
-        loadView("/fxml/clients.fxml");
-    }
+    // ========== NAVIGATION METHODS ==========
 
     @FXML
-    private void openEmployees() throws IOException {
-        loadView("/fxml/employees.fxml");
+    private void openClients() {
+        loadContent("/fxml/clients.fxml");
+        setActiveButton(clientsButton);
     }
 
     @FXML
-    private void openServices() throws IOException {
-        loadView("/fxml/services.fxml");
+    private void openEmployees() {
+        loadContent("/fxml/employees.fxml");
+        setActiveButton(employeesButton);
     }
 
     @FXML
-    private void openAppointments() throws IOException {
-        loadView("/fxml/appointments.fxml");
+    private void openServices() {
+        loadContent("/fxml/services.fxml");
+        setActiveButton(servicesButton);
     }
 
     @FXML
-    private void openPayments() throws IOException {
-        loadView("/fxml/payments.fxml");
+    private void openAppointments() {
+        loadContent("/fxml/appointments.fxml");
+        setActiveButton(appointmentsButton);
     }
 
     @FXML
-    private void openReports() throws IOException {
-        loadView("/fxml/reports.fxml");
+    private void openPayments() {
+        loadContent("/fxml/payments.fxml");
+        setActiveButton(paymentsButton);
     }
 
     @FXML
-    private void openSettings() throws IOException {
-        loadView("/fxml/settings.fxml");
+    private void openReports() {
+        loadContent("/fxml/reports.fxml");
+        setActiveButton(reportsButton);
     }
 
-    private void loadView(String fxmlPath) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-        Node view = loader.load();
-
-        mainContainer.getChildren().setAll(view);
+    @FXML
+    private void openSettings() {
+        loadContent("/fxml/settings.fxml");
+        setActiveButton(settingsButton);
     }
-
 
     @FXML
     private void handleLogout() {
         try {
-            SessionContext.clear();
+            // Очищаем сессию
+            SessionContext.clearSession();
 
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/login.fxml")
-            );
-
-            Scene scene = new Scene(loader.load());
-
+            // Закрываем текущее окно
             Stage stage = (Stage) mainContainer.getScene().getWindow();
-            stage.setScene(scene);
+            stage.close();
 
-            // 🔑 КЛЮЧЕВОЕ
-            stage.setResizable(true);
-            stage.setMaximized(false);
+            // Открываем окно логина
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+            Parent root = loader.load();
 
-            stage.show();
+            Stage loginStage = new Stage();
+            loginStage.setTitle("Login - Salon Management System");
+            loginStage.setScene(new Scene(root));
+            loginStage.show();
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
+            showError("Failed to logout: " + e.getMessage());
         }
     }
 
+    // ========== UTILITY METHODS ==========
 
+    /**
+     * Универсальный метод для загрузки FXML в центральную область
+     */
+    private void loadContent(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Node content = loader.load();
 
+            // Очищаем и добавляем новый контент
+            mainContainer.getChildren().clear();
+            mainContainer.getChildren().add(content);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showError("Failed to load content: " + e.getMessage());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            showError("FXML file not found: " + fxmlPath);
+        }
+    }
+
+    /**
+     * Показывает приветственный экран
+     */
+    private void showWelcomeScreen() {
+        javafx.scene.layout.HBox mainBox = new javafx.scene.layout.HBox(40);
+        mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+        mainBox.setStyle("-fx-padding: 30 40;");
+
+        // ===== ЛЕВАЯ ЧАСТЬ: Логотип =====
+        javafx.scene.layout.VBox leftBox = new javafx.scene.layout.VBox(15);
+        leftBox.setAlignment(javafx.geometry.Pos.CENTER);
+        leftBox.setMinWidth(240);
+        leftBox.setMaxWidth(240);
+
+        // Логотип - изображение
+        javafx.scene.image.ImageView logoImage = new javafx.scene.image.ImageView();
+        try {
+            javafx.scene.image.Image img = new javafx.scene.image.Image(
+                    getClass().getResourceAsStream("/icons/logo.png")
+            );
+            logoImage.setImage(img);
+            logoImage.setFitWidth(240);
+            logoImage.setFitHeight(240);
+            logoImage.setPreserveRatio(true);
+            leftBox.getChildren().add(logoImage);
+        } catch (Exception e) {
+            // Если изображение не найдено, показываем круг с градиентом как fallback
+            javafx.scene.shape.Circle logoCircle = new javafx.scene.shape.Circle(80);
+            logoCircle.setStyle("-fx-fill: linear-gradient(to bottom right, #7c3aed, #a855f7);");
+
+            javafx.scene.control.Label logoIcon = new javafx.scene.control.Label("✂️");
+            logoIcon.setStyle("-fx-font-size: 60px;");
+
+            leftBox.getChildren().addAll(logoCircle, logoIcon);
+        }
+
+        // ===== ПРАВАЯ ЧАСТЬ: Описание =====
+        javafx.scene.layout.VBox rightBox = new javafx.scene.layout.VBox(20);
+        rightBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        rightBox.setMaxWidth(500);
+        rightBox.setStyle("-fx-padding: 20;");
+
+        // Заголовок
+        javafx.scene.control.Label titleLabel = new javafx.scene.control.Label("Welcome to Salon Management System");
+        titleLabel.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #6b46c1; -fx-wrap-text: true;");
+        titleLabel.setWrapText(true);
+
+        // Описание
+        javafx.scene.control.Label descLabel = new javafx.scene.control.Label(
+                "A comprehensive solution for managing your salon business efficiently. " +
+                        "Streamline appointments, track clients, manage employees, and boost your productivity."
+        );
+        descLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #666666; -fx-wrap-text: true; -fx-line-spacing: 5px;");
+        descLabel.setWrapText(true);
+
+        // Разделитель
+        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
+        separator.setMaxWidth(300);
+
+        // Информация о пользователе
+        User currentUser = SessionContext.getCurrentUser();
+        javafx.scene.control.Label userLabel = new javafx.scene.control.Label(
+                "Logged in as: " + (currentUser != null ? currentUser.getUsername() : "Guest")
+        );
+        userLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #999999; -fx-font-style: italic;");
+
+        // Список функций
+        javafx.scene.layout.VBox featuresBox = new javafx.scene.layout.VBox(10);
+        featuresBox.setStyle("-fx-padding: 10 0;");
+
+        javafx.scene.control.Label featuresTitle = new javafx.scene.control.Label("Available Features:");
+        featuresTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+
+        String[] features = {
+                "✓ Client Management - Track and manage your client database",
+                "✓ Employee Management - Organize your team effectively",
+                "✓ Service Catalog - Manage services and pricing",
+                "✓ Appointment Scheduling - Book and manage appointments",
+                "✓ Payment Tracking - Monitor financial transactions",
+                "✓ Reports & Analytics - Gain insights into your business"
+        };
+
+        for (String feature : features) {
+            javafx.scene.control.Label featureLabel = new javafx.scene.control.Label(feature);
+            featureLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #555555;");
+            featuresBox.getChildren().add(featureLabel);
+        }
+
+        // Инструкция
+        javafx.scene.control.Label instructionLabel = new javafx.scene.control.Label(
+                "👈 Select a menu item from the left to get started"
+        );
+        instructionLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #7c3aed; -fx-font-weight: bold; -fx-padding: 10 0 0 0;");
+
+        rightBox.getChildren().addAll(
+                titleLabel,
+                descLabel,
+                separator,
+                userLabel,
+                featuresBox,
+                instructionLabel
+        );
+
+        mainBox.getChildren().addAll(leftBox, rightBox);
+
+        mainContainer.getChildren().clear();
+        mainContainer.getChildren().add(mainBox);
+
+        // Сбросить активную кнопку
+        clearActiveButton();
+    }
+
+    /**
+     * Подсвечивает активную кнопку меню
+     */
+    private void setActiveButton(Button button) {
+        // Сбросить стиль предыдущей активной кнопки
+        clearActiveButton();
+
+        // Установить новую активную кнопку
+        activeButton = button;
+        activeButton.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.2); " +
+                        "-fx-text-fill: white; " +
+                        "-fx-alignment: CENTER_LEFT; " +
+                        "-fx-padding: 10 15; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-font-weight: bold;"
+        );
+    }
+
+    /**
+     * Сбрасывает подсветку активной кнопки
+     */
+    private void clearActiveButton() {
+        if (activeButton != null) {
+            activeButton.setStyle(
+                    "-fx-background-color: transparent; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-alignment: CENTER_LEFT; " +
+                            "-fx-padding: 10 15; " +
+                            "-fx-font-size: 14px; " +
+                            "-fx-cursor: hand; " +
+                            "-fx-background-radius: 5;"
+            );
+            activeButton = null;
+        }
+    }
+
+    /**
+     * Показывает сообщение об ошибке
+     */
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Operation Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 }
