@@ -54,6 +54,7 @@ public class DashboardController {
         loadView("/fxml/clients.fxml");
     }
 
+
     @FXML
     private void openEmployees() throws IOException {
         loadView("/fxml/employees.fxml");
