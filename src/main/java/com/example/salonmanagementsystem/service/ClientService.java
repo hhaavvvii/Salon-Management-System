@@ -1,5 +1,6 @@
 package com.example.salonmanagementsystem.service;
 
+import com.example.salonmanagementsystem.app.SessionContext;
 import com.example.salonmanagementsystem.dao.AppointmentDao;
 import com.example.salonmanagementsystem.dao.ClientDao;
 import com.example.salonmanagementsystem.dao.impl.AppointmentDaoImpl;
@@ -7,6 +8,8 @@ import com.example.salonmanagementsystem.dao.impl.ClientDaoImpl;
 import com.example.salonmanagementsystem.exceptions.ServiceException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Client;
+import com.example.salonmanagementsystem.model.Role;
+import com.example.salonmanagementsystem.model.User;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -20,8 +23,22 @@ public class ClientService {
 
     /* 1. Получение списка */
     public List<Client> getAllClients() {
-        return clientDao.findAll();
+        User user = SessionContext.getCurrentUser();
+
+        if (user.getRole() == Role.ADMIN) {
+            return clientDao.findAll();
+        }
+
+        if (user.getRole() == Role.MASTER) {
+            if (user.getEmployeeId() == null) {
+                throw new ValidationException("Master is not linked to employee");
+            }
+            return clientDao.findByEmployee(user.getEmployeeId());
+        }
+
+        throw new ValidationException("Unknown role");
     }
+
 
     /* 2. Создание клиента */
     public Client createClient(Client client) {
@@ -98,15 +115,21 @@ public class ClientService {
 
     /* 5. Поиск */
     public List<Client> searchClients(String query) {
+        List<Client> base = getAllClients();
+
+        if (query == null || query.isBlank()) return base;
+
         String q = query.toLowerCase();
 
-        return clientDao.findAll().stream()
+        return base.stream()
                 .filter(c ->
-                        c.getFirstName().toLowerCase().contains(q) ||
-                                c.getPhone().contains(q)
+                        (c.getFirstName() != null && c.getFirstName().toLowerCase().contains(q)) ||
+                                (c.getLastName() != null && c.getLastName().toLowerCase().contains(q)) ||
+                                (c.getPhone() != null && c.getPhone().contains(q))
                 )
                 .toList();
     }
+
 
     /* ===== helpers ===== */
 

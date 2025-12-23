@@ -119,6 +119,41 @@ public class ClientDaoImpl implements ClientDao {
         }
     }
 
+    @Override
+    public List<Client> findByEmployee(long employeeId) {
+        String sql = """
+        SELECT DISTINCT c.*
+        FROM clients c
+        JOIN appointments a ON a.client_id = c.id
+        WHERE a.employee_id = ?
+        ORDER BY c.first_name
+    """;
+
+        List<Client> clients = new ArrayList<>();
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, employeeId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Client c = new Client();
+                c.setId(rs.getLong("id"));
+                c.setFirstName(rs.getString("first_name"));
+                c.setLastName(rs.getString("last_name"));
+                c.setPhone(rs.getString("phone"));
+                c.setEmail(rs.getString("email"));
+                c.setNotes(rs.getString("notes"));
+                clients.add(c);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return clients;
+    }
+
+
     private Client map(ResultSet rs) throws SQLException {
         Client c = new Client();
         c.setId(rs.getLong("id"));

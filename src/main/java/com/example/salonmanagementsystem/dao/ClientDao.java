@@ -12,6 +12,9 @@ public interface ClientDao {
 
     Optional<Client> findByPhone(String phone);
 
+    List<Client> findByEmployee(long employeeId);
+
+
     void insert(Client client);
 
     void update(Client client);
