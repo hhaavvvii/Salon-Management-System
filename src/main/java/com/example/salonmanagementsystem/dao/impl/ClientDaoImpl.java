@@ -84,13 +84,13 @@ public class ClientDaoImpl implements ClientDao {
     @Override
     public void update(Client client) {
         String sql = """
-            UPDATE clients
-            SET first_name=?, last_name=?, phone=?, email=?, notes=?
-            WHERE id=?
-        """;
+        UPDATE clients
+        SET first_name = ?, last_name = ?, phone = ?, email = ?, notes = ?
+        WHERE id = ?
+    """;
 
-        try (Connection c = DBUtil.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, client.getFirstName());
             ps.setString(2, client.getLastName());
@@ -98,11 +98,13 @@ public class ClientDaoImpl implements ClientDao {
             ps.setString(4, client.getEmail());
             ps.setString(5, client.getNotes());
             ps.setLong(6, client.getId());
+
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+
 
     @Override
     public void delete(long id) {

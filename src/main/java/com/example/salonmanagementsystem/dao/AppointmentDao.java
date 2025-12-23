@@ -1,4 +1,6 @@
 package com.example.salonmanagementsystem.dao;
 
-public class AppointmentDao {
+public interface AppointmentDao {
+
+    boolean hasFutureAppointments(long clientId);
 }

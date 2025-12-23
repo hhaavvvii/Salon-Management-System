@@ -146,8 +146,69 @@ public class ClientsController {
 
     @FXML
     private void onEdit() {
-        // ШАГ 3 — реализуем дальше
+        Client selected = clientsTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showError("Select a client to edit");
+            return;
+        }
+
+        Dialog<Client> dialog = new Dialog<>();
+        dialog.setTitle("Edit client");
+
+        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
+
+        TextField firstName = new TextField(selected.getFirstName());
+        TextField lastName = new TextField(selected.getLastName());
+        TextField phone = new TextField(selected.getPhone());
+        TextField email = new TextField(selected.getEmail());
+        TextArea notes = new TextArea(selected.getNotes());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+
+        grid.add(new Label("First name*:"), 0, 0);
+        grid.add(firstName, 1, 0);
+
+        grid.add(new Label("Last name:"), 0, 1);
+        grid.add(lastName, 1, 1);
+
+        grid.add(new Label("Phone*:"), 0, 2);
+        grid.add(phone, 1, 2);
+
+        grid.add(new Label("Email:"), 0, 3);
+        grid.add(email, 1, 3);
+
+        grid.add(new Label("Notes:"), 0, 4);
+        grid.add(notes, 1, 4);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(btn -> {
+            if (btn == save) {
+                Client updated = new Client();
+                updated.setId(selected.getId());
+                updated.setFirstName(firstName.getText());
+                updated.setLastName(lastName.getText());
+                updated.setPhone(phone.getText());
+                updated.setEmail(email.getText());
+                updated.setNotes(notes.getText());
+                return updated;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(client -> {
+            try {
+                clientService.updateClient(client);
+                reloadClients();
+            } catch (RuntimeException e) {
+                showError(e.getMessage());
+            }
+        });
     }
+
 
     /* ===================== UTIL ===================== */
 

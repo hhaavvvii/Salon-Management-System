@@ -1,6 +1,8 @@
 package com.example.salonmanagementsystem.service;
 
+import com.example.salonmanagementsystem.dao.AppointmentDao;
 import com.example.salonmanagementsystem.dao.ClientDao;
+import com.example.salonmanagementsystem.dao.impl.AppointmentDaoImpl;
 import com.example.salonmanagementsystem.dao.impl.ClientDaoImpl;
 import com.example.salonmanagementsystem.exceptions.ServiceException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
@@ -47,13 +49,23 @@ public class ClientService {
     /* 3. Обновление */
     public void updateClient(Client client) {
         if (client.getId() == null) {
-            throw new ServiceException("Client ID is required");
+            throw new ValidationException("Client id is required");
         }
 
-        validate(client);
+        if (client.getFirstName() == null || client.getFirstName().isBlank()) {
+            throw new ValidationException("First name is required");
+        }
+
+        if (client.getPhone() == null || client.getPhone().isBlank()) {
+            throw new ValidationException("Phone is required");
+        }
+
+        if (!client.getPhone().matches("^\\+?[0-9]{9,15}$")) {
+            throw new ValidationException("Invalid phone format");
+        }
 
         clientDao.findById(client.getId())
-                .orElseThrow(() -> new ServiceException("Client not found"));
+                .orElseThrow(() -> new ValidationException("Client not found"));
 
         clientDao.findByPhone(client.getPhone())
                 .filter(c -> !c.getId().equals(client.getId()))
@@ -64,14 +76,25 @@ public class ClientService {
         clientDao.update(client);
     }
 
+
     /* 4. Удаление */
+    private final AppointmentDao appointmentDao =
+            new AppointmentDaoImpl();
+
     public void deleteClient(long clientId) {
-        // здесь позже будет проверка записей
+
         clientDao.findById(clientId)
-                .orElseThrow(() -> new ServiceException("Client not found"));
+                .orElseThrow(() -> new ValidationException("Client not found"));
+
+        if (appointmentDao.hasFutureAppointments(clientId)) {
+            throw new ValidationException(
+                    "Cannot delete client with active or future appointments"
+            );
+        }
 
         clientDao.delete(clientId);
     }
+
 
     /* 5. Поиск */
     public List<Client> searchClients(String query) {
