@@ -1,7 +1,7 @@
 package com.example.salonmanagementsystem.model;
 
 public enum AppointmentStatus {
-    PlANNED,
+    PLANNED,
     DONE,
     CANCELLED
 }

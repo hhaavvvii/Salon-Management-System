@@ -1,147 +1,101 @@
 package com.example.salonmanagementsystem.service;
 
-import com.example.salonmanagementsystem.app.SessionContext;
-import com.example.salonmanagementsystem.dao.AppointmentDao;
 import com.example.salonmanagementsystem.dao.ClientDao;
-import com.example.salonmanagementsystem.dao.impl.AppointmentDaoImpl;
 import com.example.salonmanagementsystem.dao.impl.ClientDaoImpl;
-import com.example.salonmanagementsystem.exceptions.ServiceException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Client;
-import com.example.salonmanagementsystem.model.Role;
-import com.example.salonmanagementsystem.model.User;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class ClientService {
 
     private final ClientDao clientDao = new ClientDaoImpl();
 
-    private static final Pattern PHONE_PATTERN =
-            Pattern.compile("^\\+?[0-9]{9,15}$");
-
-    /* 1. Получение списка */
     public List<Client> getAllClients() {
-        User user = SessionContext.getCurrentUser();
-
-        if (user.getRole() == Role.ADMIN) {
-            return clientDao.findAll();
-        }
-
-        if (user.getRole() == Role.MASTER) {
-            if (user.getEmployeeId() == null) {
-                throw new ValidationException("Master is not linked to employee");
-            }
-            return clientDao.findByEmployee(user.getEmployeeId());
-        }
-
-        throw new ValidationException("Unknown role");
+        return clientDao.findAll();
     }
 
+    public List<Client> getActiveClients() {
+        return clientDao.findActiveClients();
+    }
 
-    /* 2. Создание клиента */
-    public Client createClient(Client client) {
-        if (client.getFirstName() == null || client.getFirstName().isBlank()) {
-            throw new ValidationException("First name is required");
-        }
-        if (client.getPhone() == null || client.getPhone().isBlank()) {
-            throw new ValidationException("Phone is required");
-        }
+    public List<Client> searchClients(String name, String phone, Boolean active) {
+        return clientDao.findByFilters(name, phone, active);
+    }
 
-        if (!client.getPhone().matches("^\\+?[0-9]{9,15}$")) {
-            throw new ValidationException("Invalid phone format");
-        }
+    public void createClient(Client client) {
+        validateClient(client);
 
-        clientDao.findByPhone(client.getPhone()).ifPresent(c -> {
-            throw new ValidationException("Client with this phone already exists");
-        });
+        // Проверка уникальности телефона
+        if (clientDao.phoneExists(client.getPhone(), null)) {
+            throw new ValidationException(
+                    "Client with phone " + client.getPhone() + " already exists"
+            );
+        }
 
         clientDao.insert(client);
-        return client;
     }
 
-
-
-    /* 3. Обновление */
     public void updateClient(Client client) {
         if (client.getId() == null) {
-            throw new ValidationException("Client id is required");
+            throw new ValidationException("Client ID is required for update");
         }
 
-        if (client.getFirstName() == null || client.getFirstName().isBlank()) {
-            throw new ValidationException("First name is required");
+        validateClient(client);
+
+        // Проверка уникальности телефона (исключая текущего клиента)
+        if (clientDao.phoneExists(client.getPhone(), client.getId())) {
+            throw new ValidationException(
+                    "Another client with phone " + client.getPhone() + " already exists"
+            );
         }
-
-        if (client.getPhone() == null || client.getPhone().isBlank()) {
-            throw new ValidationException("Phone is required");
-        }
-
-        if (!client.getPhone().matches("^\\+?[0-9]{9,15}$")) {
-            throw new ValidationException("Invalid phone format");
-        }
-
-        clientDao.findById(client.getId())
-                .orElseThrow(() -> new ValidationException("Client not found"));
-
-        clientDao.findByPhone(client.getPhone())
-                .filter(c -> !c.getId().equals(client.getId()))
-                .ifPresent(c -> {
-                    throw new ValidationException("Phone already used by another client");
-                });
 
         clientDao.update(client);
     }
 
-
-    /* 4. Удаление */
-    private final AppointmentDao appointmentDao =
-            new AppointmentDaoImpl();
-
-    public void deleteClient(long clientId) {
-
-        clientDao.findById(clientId)
-                .orElseThrow(() -> new ValidationException("Client not found"));
-
-        if (appointmentDao.hasFutureAppointments(clientId)) {
-            throw new ValidationException(
-                    "Cannot delete client with active or future appointments"
-            );
-        }
-
-        clientDao.delete(clientId);
+    public void deactivateClient(long clientId) {
+        clientDao.setInactive(clientId);
     }
 
+    private void validateClient(Client client) {
+        StringBuilder errors = new StringBuilder();
 
-    /* 5. Поиск */
-    public List<Client> searchClients(String query) {
-        List<Client> base = getAllClients();
-
-        if (query == null || query.isBlank()) return base;
-
-        String q = query.toLowerCase();
-
-        return base.stream()
-                .filter(c ->
-                        (c.getFirstName() != null && c.getFirstName().toLowerCase().contains(q)) ||
-                                (c.getLastName() != null && c.getLastName().toLowerCase().contains(q)) ||
-                                (c.getPhone() != null && c.getPhone().contains(q))
-                )
-                .toList();
-    }
-
-
-    /* ===== helpers ===== */
-
-    private void validate(Client c) {
-        if (c.getFirstName() == null || c.getFirstName().isBlank()) {
-            throw new ValidationException("First name is required");
+        // Проверка обязательных полей
+        if (client.getFirstName() == null || client.getFirstName().trim().isEmpty()) {
+            errors.append("• First name is required\n");
         }
-        if (c.getPhone() == null || c.getPhone().isBlank()) {
-            throw new ValidationException("Phone is required");
+
+        if (client.getLastName() == null || client.getLastName().trim().isEmpty()) {
+            errors.append("• Last name is required\n");
         }
-        if (!PHONE_PATTERN.matcher(c.getPhone()).matches()) {
-            throw new ValidationException("Invalid phone format");
+
+        if (client.getPhone() == null || client.getPhone().trim().isEmpty()) {
+            errors.append("• Phone is required\n");
+        }
+
+        // Валидация имени (только буквы и пробелы)
+        if (client.getFirstName() != null && !client.getFirstName().matches("^[a-zA-Zа-яА-ЯёЁ\\s-]+$")) {
+            errors.append("• First name can only contain letters, spaces and hyphens\n");
+        }
+
+        if (client.getLastName() != null && !client.getLastName().matches("^[a-zA-Zа-яА-ЯёЁ\\s-]+$")) {
+            errors.append("• Last name can only contain letters, spaces and hyphens\n");
+        }
+
+        // Валидация телефона (базовая проверка)
+        if (client.getPhone() != null && !client.getPhone().matches("^[+]?[0-9\\s\\-()]{7,20}$")) {
+            errors.append("• Phone must be valid (7-20 digits, can include +, -, (), spaces)\n");
+        }
+
+        // Валидация email (если указан)
+        if (client.getEmail() != null && !client.getEmail().trim().isEmpty()) {
+            if (!client.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                errors.append("• Email must be valid\n");
+            }
+        }
+
+        if (errors.length() > 0) {
+            throw new ValidationException("Validation failed:\n" + errors.toString());
         }
     }
 }

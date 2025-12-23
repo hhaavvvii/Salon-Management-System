@@ -40,7 +40,7 @@ public class LoginController {
                 new PasswordUtil()
         );
 
-        SessionContext.clear();
+        SessionContext.clearSession();
     }
 
 

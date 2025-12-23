@@ -1,0 +1,68 @@
+/* Стили для кнопок навигации */
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10 15;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-background-radius: 5;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(255,255,255,0.15);
+}
+
+.nav-button:pressed {
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+
+.nav-button-active {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-text-fill: white;
+}
+
+/* Стиль для кнопки Logout */
+.logout-button {
+    -fx-background-color: rgba(255,255,255,0.15);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 15;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-background-radius: 5;
+}
+
+.logout-button:hover {
+    -fx-background-color: rgba(255,255,255,0.25);
+}
+
+.logout-button:pressed {
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+
+/* Стили для ScrollPane */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .scroll-bar:vertical,
+.scroll-pane > .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .scroll-bar:vertical > .thumb,
+.scroll-pane > .scroll-bar:horizontal > .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
+}
+
+.scroll-pane > .scroll-bar:vertical > .thumb:hover,
+.scroll-pane > .scroll-bar:horizontal > .thumb:hover {
+    -fx-background-color: #95a5a6;
+}

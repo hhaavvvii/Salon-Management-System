@@ -1,220 +1,339 @@
 package com.example.salonmanagementsystem.controllers;
 
+import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Client;
 import com.example.salonmanagementsystem.service.ClientService;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
+
+import java.util.List;
 
 public class ClientsController {
 
-    /* ===================== UI ===================== */
-
+    // Таблица
     @FXML private TableView<Client> clientsTable;
-    @FXML private TextField searchField;
+    @FXML private TableColumn<Client, String> idCol;
+    @FXML private TableColumn<Client, String> firstNameCol;
+    @FXML private TableColumn<Client, String> lastNameCol;
+    @FXML private TableColumn<Client, String> phoneCol;
+    @FXML private TableColumn<Client, String> emailCol;
+    @FXML private TableColumn<Client, String> statusCol;
 
-    @FXML private TableColumn<Client, Long> idColumn;
-    @FXML private TableColumn<Client, String> firstNameColumn;
-    @FXML private TableColumn<Client, String> lastNameColumn;
-    @FXML private TableColumn<Client, String> phoneColumn;
-    @FXML private TableColumn<Client, String> emailColumn;
-    @FXML private TableColumn<Client, String> notesColumn;
+    // Фильтры
+    @FXML private TextField searchNameField;
+    @FXML private TextField searchPhoneField;
+    @FXML private ComboBox<String> statusFilter;
 
-    /* ===================== DATA ===================== */
+    // Форма
+    @FXML private Label formTitle;
+    @FXML private TextField firstNameField;
+    @FXML private TextField lastNameField;
+    @FXML private TextField phoneField;
+    @FXML private TextField emailField;
+    @FXML private TextArea notesField;
+    @FXML private Button saveButton;
 
     private final ClientService clientService = new ClientService();
-    private final ObservableList<Client> clients =
-            FXCollections.observableArrayList();
+    private final ObservableList<Client> clientData = FXCollections.observableArrayList();
 
-    /* ===================== INIT ===================== */
+    private Client selectedClient = null;
+    private boolean isEditMode = false;
 
     @FXML
     public void initialize() {
-        configureColumns();
-        configureTable();
-        reloadClients();
+        setupTable();
+        setupFilters();
+        setupForm();
+        loadData();
     }
 
-    private void configureColumns() {
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        firstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
-        lastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
-        phoneColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
-        emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
-        notesColumn.setCellValueFactory(new PropertyValueFactory<>("notes"));
-    }
+    private void setupTable() {
+        // Настройка колонок
+        idCol.setCellValueFactory(data ->
+                new SimpleStringProperty(String.valueOf(data.getValue().getId()))
+        );
 
-    private void configureTable() {
-        clientsTable.setItems(clients);
-        clientsTable.setColumnResizePolicy(
-                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
+        firstNameCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getFirstName())
+        );
+
+        lastNameCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getLastName())
+        );
+
+        phoneCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getPhone())
+        );
+
+        emailCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getEmail() != null ? data.getValue().getEmail() : "")
+        );
+
+        statusCol.setCellValueFactory(data ->
+                new SimpleStringProperty(data.getValue().getStatus())
+        );
+
+        // Цветовое выделение статуса
+        statusCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status);
+                    if (status.equals("ACTIVE")) {
+                        setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    }
+                }
+            }
+        });
+
+        clientsTable.setItems(clientData);
+
+        // Обработка выбора строки
+        clientsTable.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldSelection, newSelection) -> {
+                    selectedClient = newSelection;
+                }
         );
     }
 
-    /* ===================== DATA LOAD ===================== */
-
-    private void reloadClients() {
-        clients.setAll(clientService.getAllClients());
+    private void setupFilters() {
+        // Заполнение фильтра статусов
+        statusFilter.setItems(FXCollections.observableArrayList("ALL", "ACTIVE", "INACTIVE"));
+        statusFilter.setValue("ALL");
     }
 
-    /* ===================== ACTIONS ===================== */
-
-    @FXML
-    private void onAdd() {
-        Dialog<Client> dialog = new Dialog<>();
-        dialog.setTitle("Add client");
-
-        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
-
-        TextField firstName = new TextField();
-        TextField lastName = new TextField();
-        TextField phone = new TextField();
-        TextField email = new TextField();
-        TextArea notes = new TextArea();
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-
-        grid.add(new Label("First name*:"), 0, 0);
-        grid.add(firstName, 1, 0);
-
-        grid.add(new Label("Last name:"), 0, 1);
-        grid.add(lastName, 1, 1);
-
-        grid.add(new Label("Phone*:"), 0, 2);
-        grid.add(phone, 1, 2);
-
-        grid.add(new Label("Email:"), 0, 3);
-        grid.add(email, 1, 3);
-
-        grid.add(new Label("Notes:"), 0, 4);
-        grid.add(notes, 1, 4);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(btn -> {
-            if (btn == save) {
-                Client c = new Client();
-                c.setFirstName(firstName.getText());
-                c.setLastName(lastName.getText());
-                c.setPhone(phone.getText());
-                c.setEmail(email.getText());
-                c.setNotes(notes.getText());
-                return c;
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(client -> {
-            try {
-                clientService.createClient(client);
-                reloadClients();
-            } catch (RuntimeException e) {
-                showError(e.getMessage());
-            }
-        });
+    private void setupForm() {
+        // Начальное состояние - режим добавления
+        setAddMode();
     }
 
-    @FXML
-    private void onDelete() {
-        Client selected = clientsTable.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
-
+    private void loadData() {
         try {
-            clientService.deleteClient(selected.getId());
-            reloadClients();
-        } catch (RuntimeException e) {
-            showError(e.getMessage());
+            clientData.setAll(clientService.getAllClients());
+        } catch (Exception e) {
+            showError("Failed to load clients: " + e.getMessage());
         }
     }
+
+    /* ==========================================================
+       SEARCH AND FILTER
+       ========================================================== */
 
     @FXML
     private void onSearch() {
-        String query = searchField.getText();
+        try {
+            String name = searchNameField.getText();
+            String phone = searchPhoneField.getText();
+            String status = statusFilter.getValue();
 
-        if (query == null || query.isBlank()) {
-            reloadClients();
-        } else {
-            clients.setAll(clientService.searchClients(query));
+            Boolean activeFilter = null;
+            if (status != null && !status.equals("ALL")) {
+                activeFilter = status.equals("ACTIVE");
+            }
+
+            List<Client> results = clientService.searchClients(name, phone, activeFilter);
+            clientData.setAll(results);
+
+        } catch (Exception e) {
+            showError("Search failed: " + e.getMessage());
         }
     }
 
     @FXML
+    private void onReset() {
+        searchNameField.clear();
+        searchPhoneField.clear();
+        statusFilter.setValue("ALL");
+        loadData();
+    }
+
+    /* ==========================================================
+       SAVE (CREATE OR UPDATE)
+       ========================================================== */
+
+    @FXML
+    private void onSave() {
+        try {
+            validateForm();
+
+            Client client = isEditMode ? selectedClient : new Client();
+
+            client.setFirstName(firstNameField.getText().trim());
+            client.setLastName(lastNameField.getText().trim());
+            client.setPhone(phoneField.getText().trim());
+            client.setEmail(emailField.getText().trim().isEmpty() ? null : emailField.getText().trim());
+            client.setNotes(notesField.getText().trim().isEmpty() ? null : notesField.getText().trim());
+
+            if (isEditMode) {
+                clientService.updateClient(client);
+                showSuccess("Client updated successfully!");
+            } else {
+                clientService.createClient(client);
+                showSuccess("Client created successfully!");
+            }
+
+            loadData();
+            onClear();
+
+        } catch (ValidationException e) {
+            showError(e.getMessage());
+        } catch (Exception e) {
+            showError("Error saving client: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void validateForm() {
+        StringBuilder errors = new StringBuilder();
+
+        if (firstNameField.getText() == null || firstNameField.getText().trim().isEmpty()) {
+            errors.append("• First name is required\n");
+        }
+
+        if (lastNameField.getText() == null || lastNameField.getText().trim().isEmpty()) {
+            errors.append("• Last name is required\n");
+        }
+
+        if (phoneField.getText() == null || phoneField.getText().trim().isEmpty()) {
+            errors.append("• Phone is required\n");
+        }
+
+        if (errors.length() > 0) {
+            throw new ValidationException("Please fill all required fields:\n" + errors.toString());
+        }
+    }
+
+    /* ==========================================================
+       EDIT
+       ========================================================== */
+
+    @FXML
     private void onEdit() {
-        Client selected = clientsTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            showError("Select a client to edit");
+        if (selectedClient == null) {
+            showWarning("Please select a client to edit");
             return;
         }
 
-        Dialog<Client> dialog = new Dialog<>();
-        dialog.setTitle("Edit client");
+        setEditMode();
+        fillFormWithClient(selectedClient);
+    }
 
-        ButtonType save = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(save, ButtonType.CANCEL);
+    private void fillFormWithClient(Client client) {
+        firstNameField.setText(client.getFirstName());
+        lastNameField.setText(client.getLastName());
+        phoneField.setText(client.getPhone());
+        emailField.setText(client.getEmail() != null ? client.getEmail() : "");
+        notesField.setText(client.getNotes() != null ? client.getNotes() : "");
+    }
 
-        TextField firstName = new TextField(selected.getFirstName());
-        TextField lastName = new TextField(selected.getLastName());
-        TextField phone = new TextField(selected.getPhone());
-        TextField email = new TextField(selected.getEmail());
-        TextArea notes = new TextArea(selected.getNotes());
+    /* ==========================================================
+       DEACTIVATE
+       ========================================================== */
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
+    @FXML
+    private void onDeactivate() {
+        if (selectedClient == null) {
+            showWarning("Please select a client to deactivate");
+            return;
+        }
 
-        grid.add(new Label("First name*:"), 0, 0);
-        grid.add(firstName, 1, 0);
+        if (!selectedClient.isActive()) {
+            showWarning("Client is already inactive");
+            return;
+        }
 
-        grid.add(new Label("Last name:"), 0, 1);
-        grid.add(lastName, 1, 1);
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Confirm Deactivation");
+        confirmation.setHeaderText("Deactivate Client");
+        confirmation.setContentText(
+                "Are you sure you want to deactivate " + selectedClient.getFullName() + "?\n" +
+                        "This client will not be available for new appointments."
+        );
 
-        grid.add(new Label("Phone*:"), 0, 2);
-        grid.add(phone, 1, 2);
-
-        grid.add(new Label("Email:"), 0, 3);
-        grid.add(email, 1, 3);
-
-        grid.add(new Label("Notes:"), 0, 4);
-        grid.add(notes, 1, 4);
-
-        dialog.getDialogPane().setContent(grid);
-
-        dialog.setResultConverter(btn -> {
-            if (btn == save) {
-                Client updated = new Client();
-                updated.setId(selected.getId());
-                updated.setFirstName(firstName.getText());
-                updated.setLastName(lastName.getText());
-                updated.setPhone(phone.getText());
-                updated.setEmail(email.getText());
-                updated.setNotes(notes.getText());
-                return updated;
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(client -> {
-            try {
-                clientService.updateClient(client);
-                reloadClients();
-            } catch (RuntimeException e) {
-                showError(e.getMessage());
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    clientService.deactivateClient(selectedClient.getId());
+                    showSuccess("Client deactivated successfully!");
+                    loadData();
+                    onClear();
+                } catch (Exception e) {
+                    showError("Error deactivating client: " + e.getMessage());
+                }
             }
         });
     }
 
+    /* ==========================================================
+       CLEAR FORM
+       ========================================================== */
 
-    /* ===================== UTIL ===================== */
+    @FXML
+    private void onClear() {
+        firstNameField.clear();
+        lastNameField.clear();
+        phoneField.clear();
+        emailField.clear();
+        notesField.clear();
 
-    private void showError(String msg) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, msg);
-        alert.setHeaderText(null);
+        selectedClient = null;
+        setAddMode();
+        clientsTable.getSelectionModel().clearSelection();
+    }
+
+    /* ==========================================================
+       UI STATE MANAGEMENT
+       ========================================================== */
+
+    private void setAddMode() {
+        isEditMode = false;
+        formTitle.setText("Add New Client");
+        saveButton.setText("Save Client");
+        saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+    }
+
+    private void setEditMode() {
+        isEditMode = true;
+        formTitle.setText("Edit Client");
+        saveButton.setText("Update Client");
+        saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-size: 14px; -fx-padding: 10;");
+    }
+
+    /* ==========================================================
+       ALERT DIALOGS
+       ========================================================== */
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Operation Failed");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText("Operation Completed");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showWarning(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Warning");
+        alert.setHeaderText("Attention Required");
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }
