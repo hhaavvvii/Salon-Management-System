@@ -3,16 +3,13 @@ package com.example.salonmanagementsystem.controllers;
 import com.example.salonmanagementsystem.model.Appointment;
 import com.example.salonmanagementsystem.model.AppointmentStatus;
 import com.example.salonmanagementsystem.model.Client;
-import com.example.salonmanagementsystem.model.ServiceItem;
+import com.example.salonmanagementsystem.model.Service;
 import com.example.salonmanagementsystem.model.Employee;
 import com.example.salonmanagementsystem.service.AppointmentService;
 import com.example.salonmanagementsystem.service.ClientService;
 import com.example.salonmanagementsystem.service.ServiceService;
 import com.example.salonmanagementsystem.service.EmployeeService;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
-import com.example.salonmanagementsystem.app.SessionContext;
-import com.example.salonmanagementsystem.model.Role;
-import com.example.salonmanagementsystem.model.User;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -24,22 +21,35 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class AppointmentsController {
 
     @FXML private TableView<Appointment> table;
     @FXML private TableColumn<Appointment, Long> idCol;
-    @FXML private TableColumn<Appointment, String> startCol;
-    @FXML private TableColumn<Appointment, String> endCol;
+    @FXML private TableColumn<Appointment, String> dateCol;
+    @FXML private TableColumn<Appointment, String> timeCol;
+    @FXML private TableColumn<Appointment, String> clientCol;
+    @FXML private TableColumn<Appointment, String> employeeCol;
+    @FXML private TableColumn<Appointment, String> serviceCol;
+    @FXML private TableColumn<Appointment, String> durationCol;
+    @FXML private TableColumn<Appointment, String> priceCol;
     @FXML private TableColumn<Appointment, String> statusCol;
 
     @FXML private ComboBox<Client> clientBox;
-    @FXML private ComboBox<ServiceItem> serviceBox;
+    @FXML private ComboBox<Service> serviceBox;
     @FXML private ComboBox<Employee> employeeBox;
 
     @FXML private DatePicker datePicker;
     @FXML private Spinner<Integer> hourSpinner;
     @FXML private Spinner<Integer> minuteSpinner;
+
+    @FXML private DatePicker filterDatePicker;
+    @FXML private ComboBox<Employee> filterEmployeeBox;
+    @FXML private ComboBox<String> filterStatusBox;
+
+    @FXML private Label formTitle;
+    @FXML private Button createButton;
 
     private final AppointmentService appointmentService = new AppointmentService();
     private final ClientService clientService = new ClientService();
@@ -47,84 +57,144 @@ public class AppointmentsController {
     private final EmployeeService employeeService = new EmployeeService();
 
     private final ObservableList<Appointment> data = FXCollections.observableArrayList();
+    private Appointment selectedAppointment = null;
 
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     @FXML
     public void initialize() {
-
-        /* ---------- TABLE SETUP ---------- */
         setupTable();
-
-        /* ---------- TIME CONTROLS ---------- */
         setupTimeControls();
-
-        /* ---------- COMBOBOX DATA ---------- */
+        setupFilters();
         setupComboBoxes();
-
-        /* ---------- LOAD DATA ---------- */
         reload();
     }
 
     private void setupTable() {
-        idCol.setCellValueFactory(
-                c -> new SimpleObjectProperty<>(c.getValue().getId())
+        idCol.setCellValueFactory(c -> new SimpleObjectProperty<>(c.getValue().getId()));
+
+        dateCol.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().getStartTime().format(DATE_FORMATTER))
         );
 
-        startCol.setCellValueFactory(
-                c -> new SimpleStringProperty(
-                        c.getValue().getStartTime().format(TIME_FORMATTER)
-                )
+        timeCol.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().getStartTime().format(TIME_FORMATTER))
         );
 
-        endCol.setCellValueFactory(
-                c -> new SimpleStringProperty(
-                        c.getValue().getEndTime().format(TIME_FORMATTER)
-                )
+        clientCol.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().getClientName())
         );
 
-        statusCol.setCellValueFactory(
-                c -> new SimpleStringProperty(
-                        c.getValue().getStatus().name()
-                )
+        employeeCol.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().getEmployeeName())
         );
+
+        serviceCol.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().getServiceName())
+        );
+
+        durationCol.setCellValueFactory(c ->
+                new SimpleStringProperty(String.valueOf(c.getValue().getDurationMinutes()))
+        );
+
+        priceCol.setCellValueFactory(c ->
+                new SimpleStringProperty(String.format("%.2f", c.getValue().getPrice()))
+        );
+
+        statusCol.setCellValueFactory(c ->
+                new SimpleStringProperty(c.getValue().getStatus().getDisplayName())
+        );
+
+        // Цветовое выделение статуса
+        statusCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status);
+                    if (status.equals("Planned")) {
+                        setStyle("-fx-text-fill: blue; -fx-font-weight: bold;");
+                    } else if (status.equals("Completed")) {
+                        setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                    } else if (status.equals("Canceled")) {
+                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    }
+                }
+            }
+        });
 
         table.setItems(data);
+
+        // Обработка выбора строки
+        table.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldSelection, newSelection) -> {
+                    selectedAppointment = newSelection;
+                }
+        );
     }
 
     private void setupTimeControls() {
-        // Часы: 8-20 (рабочее время салона)
         hourSpinner.setValueFactory(
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(8, 20, 10)
         );
 
-        // Минуты: с шагом 15 минут
         minuteSpinner.setValueFactory(
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 45, 0, 15)
         );
 
-        // Установка начальной даты на сегодня
         datePicker.setValue(LocalDate.now());
     }
 
-    private void setupComboBoxes() {
-        // Загрузка клиентов
-        try {
-            ObservableList<Client> clients = FXCollections.observableArrayList(
-                    clientService.getAllClients()
-            );
-            clientBox.setItems(clients);
+    private void setupFilters() {
+        // Статусы для фильтра
+        filterStatusBox.setItems(FXCollections.observableArrayList(
+                "ALL", "Planned", "Completed", "Canceled"
+        ));
+        filterStatusBox.setValue("ALL");
 
-            // Отображение имени клиента в ComboBox
+        // Сотрудники для фильтра
+        try {
+            ObservableList<Employee> allEmployees = FXCollections.observableArrayList();
+            allEmployees.add(null); // "All employees"
+            allEmployees.addAll(employeeService.getAllEmployees());
+            filterEmployeeBox.setItems(allEmployees);
+
+            filterEmployeeBox.setButtonCell(new ListCell<>() {
+                @Override
+                protected void updateItem(Employee employee, boolean empty) {
+                    super.updateItem(employee, empty);
+                    setText(empty || employee == null ? "All employees" : employee.getFullName());
+                }
+            });
+
+            filterEmployeeBox.setCellFactory(lv -> new ListCell<>() {
+                @Override
+                protected void updateItem(Employee employee, boolean empty) {
+                    super.updateItem(employee, empty);
+                    setText(empty || employee == null ? "All employees" : employee.getFullName());
+                }
+            });
+        } catch (Exception e) {
+            showError("Failed to load employees for filter: " + e.getMessage());
+        }
+    }
+
+    private void setupComboBoxes() {
+        // Клиенты
+        try {
+            List<Client> clients = clientService.getActiveClients();
+            clientBox.setItems(FXCollections.observableArrayList(clients));
+
             clientBox.setButtonCell(new ListCell<>() {
                 @Override
                 protected void updateItem(Client client, boolean empty) {
                     super.updateItem(client, empty);
-                    if (empty || client == null) {
-                        setText(null);
-                    } else {
-                        setText(client.getFirstName());
-                    }
+                    setText(empty || client == null ? null : client.getFullName());
                 }
             });
 
@@ -132,101 +202,59 @@ public class AppointmentsController {
                 @Override
                 protected void updateItem(Client client, boolean empty) {
                     super.updateItem(client, empty);
-                    if (empty || client == null) {
-                        setText(null);
-                    } else {
-                        setText(client.getFirstName());
-                    }
+                    setText(empty || client == null ? null : client.getFullName());
                 }
             });
-
         } catch (Exception e) {
             showError("Failed to load clients: " + e.getMessage());
         }
 
-        // Загрузка услуг
+        // Услуги
         try {
-            ObservableList<ServiceItem> services = FXCollections.observableArrayList(
-                    serviceService.getAllServices()
-            );
-            serviceBox.setItems(services);
+            List<Service> services = serviceService.getActiveServices();
+            serviceBox.setItems(FXCollections.observableArrayList(services));
 
-            // Отображение названия услуги в ComboBox
             serviceBox.setButtonCell(new ListCell<>() {
                 @Override
-                protected void updateItem(ServiceItem service, boolean empty) {
+                protected void updateItem(Service service, boolean empty) {
                     super.updateItem(service, empty);
-                    if (empty || service == null) {
-                        setText(null);
-                    } else {
-                        setText(service.getName() + " (" + service.getDurationMinutes() + " min)");
-                    }
+                    setText(empty || service == null ? null : service.getName());
                 }
             });
 
             serviceBox.setCellFactory(lv -> new ListCell<>() {
                 @Override
-                protected void updateItem(ServiceItem service, boolean empty) {
+                protected void updateItem(Service service, boolean empty) {
                     super.updateItem(service, empty);
-                    if (empty || service == null) {
-                        setText(null);
-                    } else {
-                        setText(service.getName() + " (" + service.getDurationMinutes() + " min)");
-                    }
+                    setText(empty || service == null ? null : service.getName());
                 }
             });
-
         } catch (Exception e) {
             showError("Failed to load services: " + e.getMessage());
         }
 
-        // Загрузка сотрудников (только для ADMIN)
-        User currentUser = SessionContext.getCurrentUser();
-        if (currentUser != null && currentUser.getRole() == Role.ADMIN) {
-            try {
-                ObservableList<Employee> employees = FXCollections.observableArrayList(
-                        employeeService.getAllEmployees()
-                );
+        // Сотрудники
+        try {
+            List<Employee> employees = employeeService.getActiveEmployees();
+            employeeBox.setItems(FXCollections.observableArrayList(employees));
 
-                if (employeeBox != null) {
-                    employeeBox.setItems(employees);
-                    employeeBox.setVisible(true);
-                    employeeBox.setManaged(true);
-
-                    // Отображение имени сотрудника в ComboBox
-                    employeeBox.setButtonCell(new ListCell<>() {
-                        @Override
-                        protected void updateItem(Employee employee, boolean empty) {
-                            super.updateItem(employee, empty);
-                            if (empty || employee == null) {
-                                setText(null);
-                            } else {
-                                setText(employee.getFirstName());
-                            }
-                        }
-                    });
-
-                    employeeBox.setCellFactory(lv -> new ListCell<>() {
-                        @Override
-                        protected void updateItem(Employee employee, boolean empty) {
-                            super.updateItem(employee, empty);
-                            if (empty || employee == null) {
-                                setText(null);
-                            } else {
-                                setText(employee.getFirstName());
-                            }
-                        }
-                    });
+            employeeBox.setButtonCell(new ListCell<>() {
+                @Override
+                protected void updateItem(Employee employee, boolean empty) {
+                    super.updateItem(employee, empty);
+                    setText(empty || employee == null ? null : employee.getFullName());
                 }
-            } catch (Exception e) {
-                showError("Failed to load employees: " + e.getMessage());
-            }
-        } else {
-            // Скрыть ComboBox сотрудников для MASTER
-            if (employeeBox != null) {
-                employeeBox.setVisible(false);
-                employeeBox.setManaged(false);
-            }
+            });
+
+            employeeBox.setCellFactory(lv -> new ListCell<>() {
+                @Override
+                protected void updateItem(Employee employee, boolean empty) {
+                    super.updateItem(employee, empty);
+                    setText(empty || employee == null ? null : employee.getFullName());
+                }
+            });
+        } catch (Exception e) {
+            showError("Failed to load employees: " + e.getMessage());
         }
     }
 
@@ -238,127 +266,171 @@ public class AppointmentsController {
         }
     }
 
-    /* ==========================================================
-       CREATE APPOINTMENT
-       ========================================================== */
-
     @FXML
     private void onAdd() {
         try {
-            // Валидация входных данных
-            validateInput();
-
-            // Создание объекта записи
-            Appointment appointment = buildAppointmentFromForm();
-
-            // Проверка на прошедшее время
-            if (appointment.getStartTime().isBefore(LocalDateTime.now())) {
-                showError("Cannot create appointment in the past");
-                return;
-            }
-
-            // Создание записи (внутри проверяется конфликт времени)
-            appointmentService.create(appointment);
-
-            // Обновление таблицы
+            Appointment a = buildAppointmentFromForm();
+            appointmentService.create(a);
             reload();
-
-            // Очистка формы
-            clearForm();
-
-            // Уведомление об успехе
+            onClear();
             showSuccess("Appointment created successfully!");
-
         } catch (ValidationException e) {
             showError(e.getMessage());
         } catch (RuntimeException e) {
-            showError("Error creating appointment: " + e.getMessage());
-        } catch (Exception e) {
-            showError("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void validateInput() {
-        StringBuilder errors = new StringBuilder();
-
-        if (clientBox.getValue() == null) {
-            errors.append("• Please select a client\n");
-        }
-
-        if (serviceBox.getValue() == null) {
-            errors.append("• Please select a service\n");
-        }
-
-        // Проверка сотрудника только для ADMIN
-        User currentUser = SessionContext.getCurrentUser();
-        if (currentUser != null && currentUser.getRole() == Role.ADMIN) {
-            if (employeeBox != null && employeeBox.getValue() == null) {
-                errors.append("• Please select an employee\n");
-            }
-        }
-
-        if (datePicker.getValue() == null) {
-            errors.append("• Please select a date\n");
-        }
-
-        if (hourSpinner.getValue() == null) {
-            errors.append("• Please select hour\n");
-        }
-
-        if (minuteSpinner.getValue() == null) {
-            errors.append("• Please select minutes\n");
-        }
-
-        if (errors.length() > 0) {
-            throw new ValidationException("Please fill all required fields:\n" + errors.toString());
+            showError(e.getMessage());
         }
     }
 
     private Appointment buildAppointmentFromForm() {
         Client client = clientBox.getValue();
-        ServiceItem service = serviceBox.getValue();
+        Service service = serviceBox.getValue();
+        Employee employee = employeeBox.getValue();
         LocalDate date = datePicker.getValue();
+
+        if (client == null || service == null || employee == null || date == null) {
+            throw new ValidationException("Please fill all required fields");
+        }
+
         int hour = hourSpinner.getValue();
         int minute = minuteSpinner.getValue();
 
-        // Создание времени начала
-        LocalDateTime startTime = LocalDateTime.of(date, LocalTime.of(hour, minute));
+        LocalDateTime start = LocalDateTime.of(date, LocalTime.of(hour, minute));
+        LocalDateTime end = start.plusMinutes(service.getDurationMinutes());
 
-        // Вычисление времени окончания на основе длительности услуги
-        LocalDateTime endTime = startTime.plusMinutes(service.getDurationMinutes());
+        Appointment a = new Appointment();
+        a.setClientId(client.getId());
+        a.setServiceId(service.getId());
+        a.setEmployeeId(employee.getId());
+        a.setStartTime(start);
+        a.setEndTime(end);
+        a.setStatus(AppointmentStatus.PLANNED);
+        a.setPrice(service.getPrice());
+        a.setDurationMinutes(service.getDurationMinutes());
 
-        // Создание объекта записи
-        Appointment appointment = new Appointment();
-        appointment.setClientId(client.getId());
-        appointment.setServiceId(service.getId());
-        appointment.setStartTime(startTime);
-        appointment.setEndTime(endTime);
-        appointment.setStatus(AppointmentStatus.PLANNED);
-
-        // Установка employeeId
-        User currentUser = SessionContext.getCurrentUser();
-        if (currentUser != null) {
-            if (currentUser.getRole() == Role.ADMIN && employeeBox != null && employeeBox.getValue() != null) {
-                // Для ADMIN берем выбранного сотрудника из ComboBox
-                appointment.setEmployeeId(employeeBox.getValue().getId());
-            } else if (currentUser.getRole() == Role.MASTER && currentUser.getEmployeeId() != null) {
-                // Для MASTER устанавливается автоматически в сервисе, но можно установить здесь
-                appointment.setEmployeeId(currentUser.getEmployeeId());
-            } else {
-                throw new ValidationException("Cannot determine employee for appointment");
-            }
-        }
-
-        return appointment;
+        return a;
     }
 
-    private void clearForm() {
+    @FXML
+    private void onComplete() {
+        if (selectedAppointment == null) {
+            showWarning("Please select an appointment");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.COMPLETED) {
+            showWarning("Appointment is already completed");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.CANCELED) {
+            showWarning("Cannot complete canceled appointment");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Complete Appointment");
+        confirmation.setHeaderText("Mark as Completed");
+        confirmation.setContentText("Mark this appointment as completed?");
+
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    appointmentService.completeAppointment(selectedAppointment.getId());
+                    reload();
+                    showSuccess("Appointment completed!");
+                } catch (Exception e) {
+                    showError("Error completing appointment: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void onCancel() {
+        if (selectedAppointment == null) {
+            showWarning("Please select an appointment");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.CANCELED) {
+            showWarning("Appointment is already canceled");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.COMPLETED) {
+            showWarning("Cannot cancel completed appointment");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Cancel Appointment");
+        confirmation.setHeaderText("Cancel Appointment");
+        confirmation.setContentText("Are you sure you want to cancel this appointment?");
+
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    appointmentService.cancelAppointment(selectedAppointment.getId());
+                    reload();
+                    showSuccess("Appointment canceled!");
+                } catch (Exception e) {
+                    showError("Error canceling appointment: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void onSearch() {
+        try {
+            List<Appointment> allAppointments = appointmentService.getAppointments();
+            List<Appointment> filtered = allAppointments;
+
+            // Фильтр по дате
+            LocalDate selectedDate = filterDatePicker.getValue();
+            if (selectedDate != null) {
+                filtered = filtered.stream()
+                        .filter(a -> a.getStartTime().toLocalDate().equals(selectedDate))
+                        .toList();
+            }
+
+            // Фильтр по сотруднику
+            Employee selectedEmployee = filterEmployeeBox.getValue();
+            if (selectedEmployee != null) {
+                filtered = filtered.stream()
+                        .filter(a -> a.getEmployeeId().equals(selectedEmployee.getId()))
+                        .toList();
+            }
+
+            // Фильтр по статусу
+            String selectedStatus = filterStatusBox.getValue();
+            if (selectedStatus != null && !selectedStatus.equals("ALL")) {
+                filtered = filtered.stream()
+                        .filter(a -> a.getStatus().getDisplayName().equals(selectedStatus))
+                        .toList();
+            }
+
+            data.setAll(filtered);
+
+        } catch (Exception e) {
+            showError("Search failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void onResetFilter() {
+        filterDatePicker.setValue(null);
+        filterEmployeeBox.setValue(null);
+        filterStatusBox.setValue("ALL");
+        reload();
+    }
+
+    @FXML
+    private void onClear() {
         clientBox.setValue(null);
         serviceBox.setValue(null);
-        if (employeeBox != null) {
-            employeeBox.setValue(null);
-        }
+        employeeBox.setValue(null);
         datePicker.setValue(LocalDate.now());
         hourSpinner.getValueFactory().setValue(10);
         minuteSpinner.getValueFactory().setValue(0);
@@ -376,6 +448,21 @@ public class AppointmentsController {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
         alert.setHeaderText("Operation Completed");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showWarning(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Warning");
+        alert.setHeaderText("Attention Required");
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showInfo(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
         alert.setContentText(message);
         alert.showAndWait();
     }

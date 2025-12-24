@@ -1,14 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
+<BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.ReportsController"
-            prefHeight="400.0" prefWidth="600.0">
+            prefHeight="700.0" prefWidth="1400.0">
 
-</AnchorPane>
+    <!-- Верхняя панель: Общие фильтры -->
+    <top>
+        <VBox spacing="10" style="-fx-background-color: #f8f9fa;">
+            <padding>
+                <Insets top="15" right="15" bottom="15" left="15"/>
+            </padding>
+
+            <!-- Заголовок -->
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Reports &amp; Analytics"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            </HBox>
+
+            <!-- Фильтры периода -->
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="Period:"/>
+                <DatePicker fx:id="fromDatePicker" promptText="From" prefWidth="150"/>
+                <Label text="to"/>
+                <DatePicker fx:id="toDatePicker" promptText="To" prefWidth="150"/>
+
+                <Button text="Generate Report" onAction="#onGenerate"
+                        style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8 20; -fx-font-weight: bold;"/>
+                <Button text="Export CSV" onAction="#onExport"
+                        style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 8 20;"/>
+                <Button text="Reset" onAction="#onReset"
+                        style="-fx-padding: 8 15;"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Общая выручка -->
+                <VBox alignment="CENTER_RIGHT">
+                    <Label text="Total Revenue:" style="-fx-font-size: 12px; -fx-text-fill: #6c757d;"/>
+                    <Label fx:id="totalRevenueLabel" text="0.00 ₸"
+                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #28a745;"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- Центр: Вкладки с отчетами -->
+    <center>
+        <TabPane fx:id="reportsTabPane" tabClosingPolicy="UNAVAILABLE">
+
+            <!-- Вкладка: Выручка -->
+            <Tab text="Revenue">
+                <BorderPane>
+                    <!-- Дополнительные фильтры для выручки -->
+                    <top>
+                        <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-padding: 10;">
+                            <Label text="Filter by:"/>
+                            <ComboBox fx:id="employeeFilterBox" promptText="All employees" prefWidth="180"/>
+                            <ComboBox fx:id="serviceFilterBox" promptText="All services" prefWidth="180"/>
+                            <Button text="Apply" onAction="#onApplyRevenueFilters"
+                                    style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 5 15;"/>
+                        </HBox>
+                    </top>
+
+                    <center>
+                        <TableView fx:id="revenueTable">
+                            <columns>
+                                <TableColumn fx:id="revDateCol" text="Date" minWidth="100" prefWidth="120"/>
+                                <TableColumn fx:id="revEmployeeCol" text="Employee" minWidth="150" prefWidth="200"/>
+                                <TableColumn fx:id="revServiceCol" text="Service" minWidth="150" prefWidth="250"/>
+                                <TableColumn fx:id="revCountCol" text="Count" minWidth="80" prefWidth="100"/>
+                                <TableColumn fx:id="revTotalCol" text="Total Revenue (₸)" minWidth="120" prefWidth="150"/>
+                            </columns>
+                        </TableView>
+                    </center>
+                </BorderPane>
+            </Tab>
+
+            <!-- Вкладка: Загрузка сотрудников -->
+            <Tab text="Employee Load">
+                <TableView fx:id="employeeLoadTable">
+                    <columns>
+                        <TableColumn fx:id="empNameCol" text="Employee" minWidth="200" prefWidth="300"/>
+                        <TableColumn fx:id="empAppointmentsCol" text="Appointments" minWidth="120" prefWidth="150"/>
+                        <TableColumn fx:id="empWorkTimeCol" text="Work Time" minWidth="120" prefWidth="150"/>
+                        <TableColumn fx:id="empRevenueCol" text="Revenue (₸)" minWidth="120" prefWidth="150"/>
+                        <TableColumn fx:id="empLoadCol" text="Load %" minWidth="100" prefWidth="120"/>
+                    </columns>
+                </TableView>
+            </Tab>
+
+            <!-- Вкладка: Активность клиентов -->
+            <Tab text="Client Activity">
+                <TableView fx:id="clientActivityTable">
+                    <columns>
+                        <TableColumn fx:id="clientNameCol" text="Client Name" minWidth="200" prefWidth="300"/>
+                        <TableColumn fx:id="clientPhoneCol" text="Phone" minWidth="120" prefWidth="150"/>
+                        <TableColumn fx:id="clientVisitsCol" text="Total Visits" minWidth="100" prefWidth="120"/>
+                        <TableColumn fx:id="clientSpentCol" text="Total Spent (₸)" minWidth="120" prefWidth="150"/>
+                        <TableColumn fx:id="clientLastVisitCol" text="Last Visit" minWidth="100" prefWidth="120"/>
+                    </columns>
+                </TableView>
+            </Tab>
+
+            <!-- Вкладка: Статистика по услугам -->
+            <Tab text="Services">
+                <TableView fx:id="servicesTable">
+                    <columns>
+                        <TableColumn fx:id="svcNameCol" text="Service Name" minWidth="250" prefWidth="400"/>
+                        <TableColumn fx:id="svcBookedCol" text="Times Booked" minWidth="120" prefWidth="150"/>
+                        <TableColumn fx:id="svcRevenueCol" text="Total Revenue (₸)" minWidth="120" prefWidth="180"/>
+                        <TableColumn fx:id="svcAvgPriceCol" text="Avg Price (₸)" minWidth="120" prefWidth="150"/>
+                    </columns>
+                </TableView>
+            </Tab>
+
+        </TabPane>
+    </center>
+
+    <!-- Нижняя панель: Информация -->
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #f8f9fa; -fx-padding: 10;">
+            <Label fx:id="statusLabel" text="Select a period and click 'Generate Report'"
+                   style="-fx-font-size: 12px; -fx-text-fill: #6c757d;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

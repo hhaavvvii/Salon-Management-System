@@ -52,7 +52,7 @@ CREATE TABLE appointments (
                               service_id INTEGER NOT NULL,
                               start_time TEXT NOT NULL,
                               end_time TEXT NOT NULL,
-                              status TEXT NOT NULL CHECK (status IN ('PLANNED', 'DONE', 'CANCELED')),
+                              status TEXT NOT NULL CHECK (status IN ('PLANNED', 'COMPLETED', 'CANCELED')),
 
                               FOREIGN KEY (client_id)
                                   REFERENCES clients(id)

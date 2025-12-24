@@ -1,13 +1,12 @@
 package com.example.salonmanagementsystem.model;
 
-public enum AppointmentStatus {
-    PLANNED("Planned"),
-    COMPLETED("Completed"),
-    CANCELED("Canceled");
+public enum PaymentStatus {
+    PAID("Paid"),
+    REFUNDED("Refunded");
 
     private final String displayName;
 
-    AppointmentStatus(String displayName) {
+    PaymentStatus(String displayName) {
         this.displayName = displayName;
     }
 
