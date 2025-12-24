@@ -50,49 +50,81 @@
                 <Label text="NAVIGATION"
                        style="-fx-text-fill: rgba(255,255,255,0.6); -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 5 15;"/>
 
-                <Button fx:id="clientsButton"
-                        text="👥  Clients"
-                        onAction="#openClients"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="clientsButton" onAction="#openClients" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="👥" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Clients" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
-                <Button fx:id="employeesButton"
-                        text="👨‍💼  Employees"
-                        onAction="#openEmployees"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="employeesButton" onAction="#openEmployees" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="👨‍💼" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Employees" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
-                <Button fx:id="servicesButton"
-                        text="✂️   Services"
-                        onAction="#openServices"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="servicesButton" onAction="#openServices" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="💇" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Services" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
-                <Button fx:id="appointmentsButton"
-                        text="📅  Appointments"
-                        onAction="#openAppointments"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="appointmentsButton" onAction="#openAppointments" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="📅" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Appointments" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
-                <Button fx:id="paymentsButton"
-                        text="💳  Payments"
-                        onAction="#openPayments"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="paymentsButton" onAction="#openPayments" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="💳" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Payments" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
-                <Button fx:id="reportsButton"
-                        text="📊  Reports"
-                        onAction="#openReports"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="reportsButton" onAction="#openReports" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="📊" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Reports" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
-                <Separator style="-fx-background-color: white; -fx-opacity: 1; -fx-padding: 8 0;"/>
+                <Separator style="-fx-background-color: white; -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1;">
+                    <VBox.margin>
+                        <Insets top="8" bottom="8"/>
+                    </VBox.margin>
+                </Separator>
 
-                <Button fx:id="settingsButton"
-                        text="⚙️   Settings"
-                        onAction="#openSettings"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;"/>
+                <Button fx:id="settingsButton" onAction="#openSettings" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
+                    <graphic>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="⚙️" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
+                            <Label text="Settings" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+                        </HBox>
+                    </graphic>
+                </Button>
 
             </VBox>
 
