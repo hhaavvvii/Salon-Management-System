@@ -9,39 +9,134 @@ public class Appointment {
     private Long serviceId;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private Integer durationMinutes;
+    private Double price;
     private AppointmentStatus status;
+    private String comment;
 
-    public Appointment() {}
+    // Для отображения в таблице
+    private String clientName;
+    private String employeeName;
+    private String serviceName;
 
-    public Appointment(Long clientId, Long employeeId, Long serviceId, LocalDateTime startTime, LocalDateTime endTime, AppointmentStatus status) {
+    public Appointment() {
+        this.status = AppointmentStatus.PLANNED;
+    }
+
+    public Appointment(Long clientId, Long employeeId, Long serviceId, LocalDateTime startTime, LocalDateTime endTime) {
+        this();
         this.clientId = clientId;
         this.employeeId = employeeId;
         this.serviceId = serviceId;
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
+    }
+
+    public Long getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(Long employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public Long getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(Long serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public Integer getDurationMinutes() {
+        return durationMinutes;
+    }
+
+    public void setDurationMinutes(Integer durationMinutes) {
+        this.durationMinutes = durationMinutes;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+    public AppointmentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AppointmentStatus status) {
         this.status = status;
     }
 
-    public Long getId() {return id;}
-    public void setId(Long id) {this.id = id;}
+    public String getComment() {
+        return comment;
+    }
 
-    public Long getClientId() {return clientId;}
-    public void setClientId(Long clientId) {this.clientId = clientId;}
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
 
-    public Long getEmployeeId() {return employeeId;}
-    public void setEmployeeId(Long employeeId) {this.employeeId = employeeId;}
+    // Display names
+    public String getClientName() {
+        return clientName;
+    }
 
-    public Long getServiceId() {return serviceId;}
-    public void setServiceId(Long serviceId) {this.serviceId = serviceId;}
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
 
-    public LocalDateTime getStartTime() {return startTime;}
-    public void setStartTime(LocalDateTime startTime) {this.startTime = startTime;}
+    public String getEmployeeName() {
+        return employeeName;
+    }
 
-    public LocalDateTime getEndTime() {return endTime;}
-    public void setEndTime(LocalDateTime endTime) {this.endTime = endTime;}
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
+    }
 
-    public AppointmentStatus getStatus() {return status;}
-    public void setStatus(AppointmentStatus status) {this.status = status;}
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
 
     @Override
     public String toString() {
@@ -51,7 +146,6 @@ public class Appointment {
                 ", employeeId=" + employeeId +
                 ", serviceId=" + serviceId +
                 ", startTime=" + startTime +
-                ", endTime=" + endTime +
                 ", status=" + status +
                 '}';
     }
