@@ -1,5 +1,7 @@
 package com.example.salonmanagementsystem.controllers;
 
+import com.example.salonmanagementsystem.app.SessionContext;
+import com.example.salonmanagementsystem.exceptions.AccessDeniedException;
 import com.example.salonmanagementsystem.model.Appointment;
 import com.example.salonmanagementsystem.model.AppointmentStatus;
 import com.example.salonmanagementsystem.model.Client;
@@ -50,6 +52,7 @@ public class AppointmentsController {
 
     @FXML private Label formTitle;
     @FXML private Button createButton;
+    @FXML private Button clearButton;
 
     private final AppointmentService appointmentService = new AppointmentService();
     private final ClientService clientService = new ClientService();
@@ -68,7 +71,40 @@ public class AppointmentsController {
         setupTimeControls();
         setupFilters();
         setupComboBoxes();
+        configureMasterMode(); // ← Настройка для роли MASTER
         reload();
+    }
+
+    /**
+     * Настройка UI в зависимости от роли пользователя
+     */
+    private void configureMasterMode() {
+        if (SessionContext.isMaster()) {
+            // Скрыть кнопку создания записи
+            if (createButton != null) {
+                createButton.setVisible(false);
+                createButton.setManaged(false);
+            }
+
+            // Заблокировать поля формы (только просмотр)
+            clientBox.setDisable(true);
+            serviceBox.setDisable(true);
+            employeeBox.setDisable(true);
+            datePicker.setDisable(true);
+            hourSpinner.setDisable(true);
+            minuteSpinner.setDisable(true);
+
+            if (clearButton != null) {
+                clearButton.setVisible(false);
+                clearButton.setManaged(false);
+            }
+
+            // Обновить заголовок формы
+            if (formTitle != null) {
+                formTitle.setText("Appointment Details (Read-Only)");
+                formTitle.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
+            }
+        }
     }
 
     private void setupTable() {
@@ -103,7 +139,7 @@ public class AppointmentsController {
         );
 
         statusCol.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getStatus().getDisplayName())
+                new SimpleStringProperty(c.getValue().getStatus().name())
         );
 
         // Цветовое выделение статуса
@@ -117,12 +153,10 @@ public class AppointmentsController {
                     setStyle("");
                 } else {
                     setText(status);
-                    if (status.equals("Planned")) {
-                        setStyle("-fx-text-fill: blue; -fx-font-weight: bold;");
-                    } else if (status.equals("Completed")) {
-                        setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    } else if (status.equals("Canceled")) {
-                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    switch (status) {
+                        case "PLANNED" -> setStyle("-fx-text-fill: blue; -fx-font-weight: bold;");
+                        case "COMPLETED" -> setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                        case "CANCELED" -> setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
                     }
                 }
             }
@@ -134,8 +168,39 @@ public class AppointmentsController {
         table.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldSelection, newSelection) -> {
                     selectedAppointment = newSelection;
+                    if (newSelection != null) {
+                        loadAppointmentToForm(newSelection);
+                    }
                 }
         );
+    }
+
+    /**
+     * Загрузить данные записи в форму (для просмотра)
+     */
+    private void loadAppointmentToForm(Appointment appointment) {
+        // Найти и установить клиента
+        clientBox.getItems().stream()
+                .filter(c -> c.getId().equals(appointment.getClientId()))
+                .findFirst()
+                .ifPresent(clientBox::setValue);
+
+        // Найти и установить сотрудника
+        employeeBox.getItems().stream()
+                .filter(e -> e.getId().equals(appointment.getEmployeeId()))
+                .findFirst()
+                .ifPresent(employeeBox::setValue);
+
+        // Найти и установить услугу
+        serviceBox.getItems().stream()
+                .filter(s -> s.getId().equals(appointment.getServiceId()))
+                .findFirst()
+                .ifPresent(serviceBox::setValue);
+
+        // Установить дату и время
+        datePicker.setValue(appointment.getStartTime().toLocalDate());
+        hourSpinner.getValueFactory().setValue(appointment.getStartTime().getHour());
+        minuteSpinner.getValueFactory().setValue(appointment.getStartTime().getMinute());
     }
 
     private void setupTimeControls() {
@@ -153,7 +218,7 @@ public class AppointmentsController {
     private void setupFilters() {
         // Статусы для фильтра
         filterStatusBox.setItems(FXCollections.observableArrayList(
-                "ALL", "Planned", "Completed", "Canceled"
+                "ALL", "PLANNED", "COMPLETED", "CANCELED"
         ));
         filterStatusBox.setValue("ALL");
 
@@ -168,7 +233,7 @@ public class AppointmentsController {
                 @Override
                 protected void updateItem(Employee employee, boolean empty) {
                     super.updateItem(employee, empty);
-                    setText(empty || employee == null ? "All employees" : employee.getFullName());
+                    setText(empty || employee == null ? "All employees" : employee.getFirstName() + " " + employee.getLastName());
                 }
             });
 
@@ -176,7 +241,7 @@ public class AppointmentsController {
                 @Override
                 protected void updateItem(Employee employee, boolean empty) {
                     super.updateItem(employee, empty);
-                    setText(empty || employee == null ? "All employees" : employee.getFullName());
+                    setText(empty || employee == null ? "All employees" : employee.getFirstName() + " " + employee.getLastName());
                 }
             });
         } catch (Exception e) {
@@ -187,14 +252,14 @@ public class AppointmentsController {
     private void setupComboBoxes() {
         // Клиенты
         try {
-            List<Client> clients = clientService.getActiveClients();
+            List<Client> clients = clientService.getAllClients();
             clientBox.setItems(FXCollections.observableArrayList(clients));
 
             clientBox.setButtonCell(new ListCell<>() {
                 @Override
                 protected void updateItem(Client client, boolean empty) {
                     super.updateItem(client, empty);
-                    setText(empty || client == null ? null : client.getFullName());
+                    setText(empty || client == null ? null : client.getFirstName() + " " + client.getLastName());
                 }
             });
 
@@ -202,7 +267,7 @@ public class AppointmentsController {
                 @Override
                 protected void updateItem(Client client, boolean empty) {
                     super.updateItem(client, empty);
-                    setText(empty || client == null ? null : client.getFullName());
+                    setText(empty || client == null ? null : client.getFirstName() + " " + client.getLastName());
                 }
             });
         } catch (Exception e) {
@@ -211,7 +276,7 @@ public class AppointmentsController {
 
         // Услуги
         try {
-            List<Service> services = serviceService.getActiveServices();
+            List<Service> services = serviceService.getAllServices();
             serviceBox.setItems(FXCollections.observableArrayList(services));
 
             serviceBox.setButtonCell(new ListCell<>() {
@@ -235,14 +300,14 @@ public class AppointmentsController {
 
         // Сотрудники
         try {
-            List<Employee> employees = employeeService.getActiveEmployees();
+            List<Employee> employees = employeeService.getAllEmployees();
             employeeBox.setItems(FXCollections.observableArrayList(employees));
 
             employeeBox.setButtonCell(new ListCell<>() {
                 @Override
                 protected void updateItem(Employee employee, boolean empty) {
                     super.updateItem(employee, empty);
-                    setText(empty || employee == null ? null : employee.getFullName());
+                    setText(empty || employee == null ? null : employee.getFirstName() + " " + employee.getLastName());
                 }
             });
 
@@ -250,7 +315,7 @@ public class AppointmentsController {
                 @Override
                 protected void updateItem(Employee employee, boolean empty) {
                     super.updateItem(employee, empty);
-                    setText(empty || employee == null ? null : employee.getFullName());
+                    setText(empty || employee == null ? null : employee.getFirstName() + " " + employee.getLastName());
                 }
             });
         } catch (Exception e) {
@@ -260,7 +325,8 @@ public class AppointmentsController {
 
     private void reload() {
         try {
-            data.setAll(appointmentService.getAppointments());
+            // Загружаем записи с учётом роли (фильтрация в Service)
+            data.setAll(appointmentService.getAllAppointments());
         } catch (Exception e) {
             showError("Failed to load appointments: " + e.getMessage());
         }
@@ -268,13 +334,21 @@ public class AppointmentsController {
 
     @FXML
     private void onAdd() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot create appointments");
+            return;
+        }
+
         try {
             Appointment a = buildAppointmentFromForm();
-            appointmentService.create(a);
+            appointmentService.createAppointment(a);
             reload();
             onClear();
             showSuccess("Appointment created successfully!");
         } catch (ValidationException e) {
+            showError(e.getMessage());
+        } catch (AccessDeniedException e) {
             showError(e.getMessage());
         } catch (RuntimeException e) {
             showError(e.getMessage());
@@ -335,9 +409,11 @@ public class AppointmentsController {
         confirmation.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    appointmentService.completeAppointment(selectedAppointment.getId());
+                    appointmentService.updateStatus(selectedAppointment.getId(), AppointmentStatus.COMPLETED);
                     reload();
                     showSuccess("Appointment completed!");
+                } catch (AccessDeniedException e) {
+                    showError(e.getMessage());
                 } catch (Exception e) {
                     showError("Error completing appointment: " + e.getMessage());
                 }
@@ -370,9 +446,11 @@ public class AppointmentsController {
         confirmation.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
-                    appointmentService.cancelAppointment(selectedAppointment.getId());
+                    appointmentService.updateStatus(selectedAppointment.getId(), AppointmentStatus.CANCELED);
                     reload();
                     showSuccess("Appointment canceled!");
+                } catch (AccessDeniedException e) {
+                    showError(e.getMessage());
                 } catch (Exception e) {
                     showError("Error canceling appointment: " + e.getMessage());
                 }
@@ -383,7 +461,7 @@ public class AppointmentsController {
     @FXML
     private void onSearch() {
         try {
-            List<Appointment> allAppointments = appointmentService.getAppointments();
+            List<Appointment> allAppointments = appointmentService.getAllAppointments();
             List<Appointment> filtered = allAppointments;
 
             // Фильтр по дате
@@ -406,7 +484,7 @@ public class AppointmentsController {
             String selectedStatus = filterStatusBox.getValue();
             if (selectedStatus != null && !selectedStatus.equals("ALL")) {
                 filtered = filtered.stream()
-                        .filter(a -> a.getStatus().getDisplayName().equals(selectedStatus))
+                        .filter(a -> a.getStatus().name().equals(selectedStatus))
                         .toList();
             }
 

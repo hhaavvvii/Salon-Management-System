@@ -3,106 +3,188 @@ package com.example.salonmanagementsystem.service;
 import com.example.salonmanagementsystem.app.SessionContext;
 import com.example.salonmanagementsystem.dao.AppointmentDao;
 import com.example.salonmanagementsystem.dao.impl.AppointmentDaoImpl;
+import com.example.salonmanagementsystem.exceptions.AccessDeniedException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Appointment;
 import com.example.salonmanagementsystem.model.AppointmentStatus;
-import com.example.salonmanagementsystem.model.Role;
-import com.example.salonmanagementsystem.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AppointmentService {
 
-    private final AppointmentDao dao = new AppointmentDaoImpl();
+    private final AppointmentDao appointmentDao = new AppointmentDaoImpl();
 
+    /**
+     * Получить все записи с учётом роли пользователя
+     * ADMIN видит все записи
+     * MASTER видит только свои записи
+     *
+     * Этот метод используется в контроллерах
+     */
+    public List<Appointment> getAllAppointments() {
+        List<Appointment> appointments = appointmentDao.findAll();
+
+        // Фильтрация для MASTER
+        if (SessionContext.isMaster()) {
+            Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+            return appointments.stream()
+                    .filter(a -> a.getEmployeeId().equals(currentEmployeeId))
+                    .collect(Collectors.toList());
+        }
+
+        return appointments;
+    }
+
+    /**
+     * Получить записи (псевдоним для getAllAppointments)
+     * Для обратной совместимости со старым кодом
+     */
     public List<Appointment> getAppointments() {
-        User u = SessionContext.getCurrentUser();
-        if (u.getRole() == Role.ADMIN) {
-            return dao.findAll();
-        }
-        if (u.getEmployeeId() == null) {
-            return List.of();
-        }
-        return dao.findByEmployee(u.getEmployeeId());
+        return getAllAppointments();
     }
 
-    public void create(Appointment a) {
-        User u = SessionContext.getCurrentUser();
-
-        if (u.getRole() == Role.MASTER) {
-            a.setEmployeeId(u.getEmployeeId());
+    /**
+     * Получить записи конкретного сотрудника
+     * MASTER может получить только свои записи
+     */
+    public List<Appointment> getAppointmentsByEmployee(long employeeId) {
+        // Проверка прав доступа для MASTER
+        if (SessionContext.isMaster()) {
+            Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+            if (!currentEmployeeId.equals(employeeId)) {
+                throw new AccessDeniedException("Access denied: cannot view other employee's appointments");
+            }
         }
 
-        // Валидация
-        validateAppointment(a);
-
-        // Проверка на прошедшее время
-        if (a.getStartTime().isBefore(LocalDateTime.now())) {
-            throw new ValidationException("Cannot create appointment in the past");
-        }
-
-        // Проверка конфликта времени
-        if (dao.hasTimeConflict(
-                a.getEmployeeId(),
-                a.getStartTime(),
-                a.getEndTime())) {
-
-            throw new ValidationException("Time slot is already occupied");
-        }
-
-        dao.insert(a);
+        return appointmentDao.findByEmployee(employeeId);
     }
 
-    public void update(Appointment a) {
-        if (a.getId() == null) {
-            throw new ValidationException("Appointment ID is required for update");
+    /**
+     * Создать новую запись
+     * MASTER не может создавать записи
+     */
+    public void createAppointment(Appointment appointment) {
+        // Проверка прав: MASTER не может создавать записи
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot create appointments");
         }
 
-        // Нельзя редактировать завершённые записи
-        if (a.getStatus() == AppointmentStatus.COMPLETED) {
-            throw new ValidationException("Cannot edit completed appointments");
-        }
-
-        // Проверка конфликта времени (исключая текущую запись)
-        if (dao.hasTimeConflict(a.getEmployeeId(), a.getStartTime(), a.getEndTime())) {
-            throw new ValidationException("Time slot is already occupied");
-        }
-
-        dao.update(a);
+        validateAppointment(appointment);
+        checkTimeConflict(appointment);
+        appointmentDao.insert(appointment);
     }
 
-    public void cancelAppointment(long appointmentId) {
-        dao.updateStatus(appointmentId, AppointmentStatus.CANCELED);
+    /**
+     * Создать запись (псевдоним для createAppointment)
+     * Для обратной совместимости
+     */
+    public void create(Appointment appointment) {
+        createAppointment(appointment);
     }
 
+    /**
+     * Обновить запись
+     * MASTER может обновлять только свои записи и только определённые поля
+     */
+    public void updateAppointment(Appointment appointment) {
+        // Проверка прав доступа для MASTER
+        if (SessionContext.isMaster()) {
+            Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+            if (!appointment.getEmployeeId().equals(currentEmployeeId)) {
+                throw new AccessDeniedException("Access denied: cannot modify other employee's appointments");
+            }
+            // MASTER не может менять дату, время, услугу
+            // Эта проверка должна быть на уровне UI - просто запрещаем редактирование этих полей
+        }
+
+        validateAppointment(appointment);
+        appointmentDao.update(appointment);
+    }
+
+    /**
+     * Обновить статус записи
+     * MASTER может менять статус только своих записей: PLANNED → COMPLETED/CANCELED
+     */
+    public void updateStatus(long appointmentId, AppointmentStatus newStatus) {
+        // Для MASTER проверяем, что это его запись
+        if (SessionContext.isMaster()) {
+            List<Appointment> allAppointments = appointmentDao.findAll();
+            Appointment appointment = allAppointments.stream()
+                    .filter(a -> a.getId().equals(appointmentId))
+                    .findFirst()
+                    .orElseThrow(() -> new ValidationException("Appointment not found"));
+
+            Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+            if (!appointment.getEmployeeId().equals(currentEmployeeId)) {
+                throw new AccessDeniedException("Access denied: cannot change status of other employee's appointments");
+            }
+
+            // MASTER может менять только: PLANNED → COMPLETED или PLANNED → CANCELED
+            if (appointment.getStatus() != AppointmentStatus.PLANNED) {
+                throw new ValidationException("Can only change status of PLANNED appointments");
+            }
+
+            if (newStatus != AppointmentStatus.COMPLETED && newStatus != AppointmentStatus.CANCELED) {
+                throw new ValidationException("Can only change status to COMPLETED or CANCELED");
+            }
+        }
+
+        appointmentDao.updateStatus(appointmentId, newStatus);
+    }
+
+    /**
+     * Пометить запись как выполненную
+     * Для обратной совместимости
+     */
     public void completeAppointment(long appointmentId) {
-        dao.updateStatus(appointmentId, AppointmentStatus.COMPLETED);
+        updateStatus(appointmentId, AppointmentStatus.COMPLETED);
     }
 
-    private void validateAppointment(Appointment a) {
-        if (a.getClientId() == null) {
+    /**
+     * Отменить запись
+     * Для обратной совместимости
+     */
+    public void cancelAppointment(long appointmentId) {
+        updateStatus(appointmentId, AppointmentStatus.CANCELED);
+    }
+
+    private void validateAppointment(Appointment appointment) {
+        if (appointment.getClientId() == null) {
             throw new ValidationException("Client is required");
         }
-
-        if (a.getEmployeeId() == null) {
+        if (appointment.getEmployeeId() == null) {
             throw new ValidationException("Employee is required");
         }
-
-        if (a.getServiceId() == null) {
+        if (appointment.getServiceId() == null) {
             throw new ValidationException("Service is required");
         }
-
-        if (a.getStartTime() == null) {
+        if (appointment.getStartTime() == null) {
             throw new ValidationException("Start time is required");
         }
-
-        if (a.getEndTime() == null) {
+        if (appointment.getEndTime() == null) {
             throw new ValidationException("End time is required");
         }
+        if (appointment.getStartTime().isAfter(appointment.getEndTime())) {
+            throw new ValidationException("Start time must be before end time");
+        }
+        if (appointment.getStartTime().isBefore(LocalDateTime.now())) {
+            throw new ValidationException("Cannot create appointment in the past");
+        }
+    }
 
-        if (a.getEndTime().isBefore(a.getStartTime()) || a.getEndTime().isEqual(a.getStartTime())) {
-            throw new ValidationException("End time must be after start time");
+    private void checkTimeConflict(Appointment appointment) {
+        boolean hasConflict = appointmentDao.hasTimeConflict(
+                appointment.getEmployeeId(),
+                appointment.getStartTime(),
+                appointment.getEndTime()
+        );
+
+        if (hasConflict) {
+            throw new ValidationException(
+                    "Time conflict: employee already has an appointment at this time"
+            );
         }
     }
 }

@@ -14,4 +14,6 @@ public interface ServiceDao {
     void update(Service service);
     void setInactive(long id);
     boolean serviceExists(String name, String category, Long excludeId);
+    void delete(long serviceId);
+    void setActive(long serviceId);
 }

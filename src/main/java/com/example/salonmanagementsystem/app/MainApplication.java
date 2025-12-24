@@ -1,10 +1,5 @@
 package com.example.salonmanagementsystem.app;
 
-import com.example.salonmanagementsystem.controllers.LoginController;
-import com.example.salonmanagementsystem.dao.UserDao;
-import com.example.salonmanagementsystem.dao.impl.UserDaoImpl;
-import com.example.salonmanagementsystem.service.AuthService;
-import com.example.salonmanagementsystem.util.PasswordUtil;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,27 +11,27 @@ public class MainApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        // backend
-        UserDao userDao = new UserDaoImpl();
-        PasswordUtil passwordUtil = new PasswordUtil();
-        AuthService authService = new AuthService(userDao, passwordUtil);
-
         FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/fxml/login.fxml")
         );
 
         Parent root = loader.load();
 
-        LoginController controller = loader.getController();
-        controller.setAuthService(authService);
-
         Scene scene = new Scene(root);
 
-        stage.setTitle("Salon Management System");
+        // Загрузить CSS (опционально, если есть)
+        // scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
+
+        stage.setTitle("Salon Management System - Login");
         stage.setScene(scene);
-        stage.setMinWidth(800);
-        stage.setMinHeight(600);
+        stage.setWidth(500);
+        stage.setHeight(750);
         stage.setResizable(true);
+        stage.centerOnScreen();
         stage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }

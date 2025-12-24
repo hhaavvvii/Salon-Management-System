@@ -13,44 +13,115 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class LoginController {
 
-    @FXML private RadioButton adminRadio;
+    @FXML private VBox adminRoleBox;
+    @FXML private VBox masterRoleBox;
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+    @FXML private Label errorLabel;
 
-    @FXML private RadioButton masterRadio;
+    private AuthService authService;
+    private Role selectedRole = null;
 
-    @FXML
-    private TextField usernameField;
+    // Стили для выбранной и невыбранной роли
+    private static final String ROLE_SELECTED_STYLE =
+            "-fx-background-color: linear-gradient(to bottom right, #7c3aed, #a855f7); " +
+                    "-fx-background-radius: 10; " +
+                    "-fx-padding: 20 30; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-border-color: #7c3aed; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-border-width: 2;";
 
-    @FXML
-    private PasswordField passwordField;
+    private static final String ROLE_UNSELECTED_STYLE =
+            "-fx-background-color: #f8f9fa; " +
+                    "-fx-background-radius: 10; " +
+                    "-fx-padding: 20 30; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-border-color: #e0e0e0; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-border-width: 2;";
 
-    @FXML
-    private Label errorLabel;
-
+    private static final String ROLE_HOVER_STYLE =
+            "-fx-background-color: #e8e9f3; " +
+                    "-fx-background-radius: 10; " +
+                    "-fx-padding: 20 30; " +
+                    "-fx-cursor: hand; " +
+                    "-fx-border-color: #7c3aed; " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-border-width: 2;";
 
     @FXML
     public void initialize() {
+        // Инициализация AuthService
         this.authService = new AuthService(
                 new UserDaoImpl(),
                 new PasswordUtil()
         );
 
+        // Очистка сессии
         SessionContext.clearSession();
+
+        // Настройка hover эффектов для выбора роли
+        setupRoleHoverEffects();
     }
 
+    /**
+     * Настройка hover эффектов для кнопок выбора роли
+     */
+    private void setupRoleHoverEffects() {
+        // Admin box hover
+        adminRoleBox.setOnMouseEntered(e -> {
+            if (selectedRole != Role.ADMIN) {
+                adminRoleBox.setStyle(ROLE_HOVER_STYLE);
+            }
+        });
 
+        adminRoleBox.setOnMouseExited(e -> {
+            if (selectedRole != Role.ADMIN) {
+                adminRoleBox.setStyle(ROLE_UNSELECTED_STYLE);
+            }
+        });
 
-    // AuthService ПЕРЕДАЁТСЯ извне (например, из Application)
-    private AuthService authService;
+        // Master box hover
+        masterRoleBox.setOnMouseEntered(e -> {
+            if (selectedRole != Role.MASTER) {
+                masterRoleBox.setStyle(ROLE_HOVER_STYLE);
+            }
+        });
 
-    // setter-инъекция (подходит для JavaFX)
-    public void setAuthService(AuthService authService) {
-        this.authService = authService;
+        masterRoleBox.setOnMouseExited(e -> {
+            if (selectedRole != Role.MASTER) {
+                masterRoleBox.setStyle(ROLE_UNSELECTED_STYLE);
+            }
+        });
+    }
+
+    /**
+     * Выбрать роль ADMIN
+     */
+    @FXML
+    private void selectAdminRole() {
+        selectedRole = Role.ADMIN;
+        adminRoleBox.setStyle(ROLE_SELECTED_STYLE);
+        masterRoleBox.setStyle(ROLE_UNSELECTED_STYLE);
+        errorLabel.setVisible(false);
+    }
+
+    /**
+     * Выбрать роль MASTER
+     */
+    @FXML
+    private void selectMasterRole() {
+        selectedRole = Role.MASTER;
+        masterRoleBox.setStyle(ROLE_SELECTED_STYLE);
+        adminRoleBox.setStyle(ROLE_UNSELECTED_STYLE);
+        errorLabel.setVisible(false);
     }
 
     @FXML
@@ -58,43 +129,44 @@ public class LoginController {
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // базовая UI-проверка
-        if (username == null || username.isBlank()
-                || password == null || password.isBlank()) {
-            showError("Please enter username and password");
+        // Проверка роли
+        if (selectedRole == null) {
+            showError("❌ Please select your role (Administrator or Master)");
             return;
         }
 
-        // роль выбирается для валидации, но не для установки
-        Role selectedRole;
-        if (adminRadio.isSelected()) {
-            selectedRole = Role.ADMIN;
-        } else if (masterRadio.isSelected()) {
-            selectedRole = Role.MASTER;
-        } else {
-            showError("Please select role");
+        // Проверка полей
+        if (username == null || username.isBlank()) {
+            showError("❌ Please enter your username");
+            return;
+        }
+
+        if (password == null || password.isBlank()) {
+            showError("❌ Please enter your password");
             return;
         }
 
         try {
-            // 🔹 AuthService возвращает пользователя
+            // Аутентификация через сервис
             User user = authService.login(username, password, selectedRole);
 
-            // 🔹 сохраняем пользователя в session
+            // Сохранение пользователя в сессию
             SessionContext.setCurrentUser(user);
 
             errorLabel.setVisible(false);
 
-            // 🔹 открываем dashboard по реальной роли пользователя
-            openDashboard(user.getRole());
+            // Открытие Dashboard
+            openDashboard();
 
         } catch (AuthException e) {
-            showError(e.getMessage());
+            showError("❌ " + e.getMessage());
+        } catch (Exception e) {
+            showError("❌ An error occurred during login. Please try again.");
+            e.printStackTrace();
         }
     }
 
-
-    private void openDashboard(Role role) {
+    private void openDashboard() {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/fxml/dashboard.fxml")
@@ -103,13 +175,13 @@ public class LoginController {
             Parent root = loader.load();
 
             Stage stage = (Stage) usernameField.getScene().getWindow();
+            stage.setTitle("Salon Management System - Dashboard");
             stage.setScene(new Scene(root));
-            stage.setResizable(true);
-            stage.setMaximized(false);
+            stage.setMaximized(true);
 
 
         } catch (Exception e) {
-            showError("Failed to open dashboard");
+            showError("❌ Failed to open dashboard");
             e.printStackTrace();
         }
     }

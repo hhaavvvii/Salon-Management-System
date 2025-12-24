@@ -1,29 +1,78 @@
 package com.example.salonmanagementsystem.service;
 
+import com.example.salonmanagementsystem.app.SessionContext;
+import com.example.salonmanagementsystem.dao.AppointmentDao;
 import com.example.salonmanagementsystem.dao.ClientDao;
+import com.example.salonmanagementsystem.dao.impl.AppointmentDaoImpl;
 import com.example.salonmanagementsystem.dao.impl.ClientDaoImpl;
+import com.example.salonmanagementsystem.exceptions.AccessDeniedException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
+import com.example.salonmanagementsystem.model.Appointment;
 import com.example.salonmanagementsystem.model.Client;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ClientService {
 
     private final ClientDao clientDao = new ClientDaoImpl();
+    private final AppointmentDao appointmentDao = new AppointmentDaoImpl();
 
+    /**
+     * Получить всех клиентов с учётом роли
+     * ADMIN видит всех клиентов
+     * MASTER видит только клиентов из своих записей
+     */
     public List<Client> getAllClients() {
-        return clientDao.findAll();
+        List<Client> clients = clientDao.findAll();
+
+        // Фильтрация для MASTER
+        if (SessionContext.isMaster()) {
+            return filterClientsForMaster(clients);
+        }
+
+        return clients;
     }
 
+    /**
+     * Получить активных клиентов с учётом роли
+     */
     public List<Client> getActiveClients() {
-        return clientDao.findActiveClients();
+        List<Client> clients = clientDao.findActiveClients();
+
+        // Фильтрация для MASTER
+        if (SessionContext.isMaster()) {
+            return filterClientsForMaster(clients);
+        }
+
+        return clients;
     }
 
+    /**
+     * Поиск клиентов с учётом роли
+     */
     public List<Client> searchClients(String name, String phone, Boolean active) {
-        return clientDao.findByFilters(name, phone, active);
+        List<Client> clients = clientDao.findByFilters(name, phone, active);
+
+        // Фильтрация для MASTER
+        if (SessionContext.isMaster()) {
+            return filterClientsForMaster(clients);
+        }
+
+        return clients;
     }
 
+    /**
+     * Создать клиента
+     * MASTER не может создавать клиентов
+     */
     public void createClient(Client client) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot create clients");
+        }
+
         validateClient(client);
 
         // Проверка уникальности телефона
@@ -36,7 +85,16 @@ public class ClientService {
         clientDao.insert(client);
     }
 
+    /**
+     * Обновить клиента
+     * MASTER не может редактировать клиентов
+     */
     public void updateClient(Client client) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot edit clients");
+        }
+
         if (client.getId() == null) {
             throw new ValidationException("Client ID is required for update");
         }
@@ -53,8 +111,42 @@ public class ClientService {
         clientDao.update(client);
     }
 
+    /**
+     * Деактивировать клиента
+     * MASTER не может деактивировать клиентов
+     */
     public void deactivateClient(long clientId) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot deactivate clients");
+        }
+
         clientDao.setInactive(clientId);
+    }
+
+    /**
+     * Фильтрация клиентов для MASTER
+     * Оставляет только тех клиентов, у которых есть записи к данному мастеру
+     */
+    private List<Client> filterClientsForMaster(List<Client> clients) {
+        Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+
+        if (currentEmployeeId == null) {
+            return List.of(); // Если нет employee_id, нет доступа
+        }
+
+        // Получить все записи мастера
+        List<Appointment> masterAppointments = appointmentDao.findByEmployee(currentEmployeeId);
+
+        // Собрать ID клиентов из записей
+        Set<Long> clientIds = masterAppointments.stream()
+                .map(Appointment::getClientId)
+                .collect(Collectors.toSet());
+
+        // Оставить только клиентов из записей мастера
+        return clients.stream()
+                .filter(client -> clientIds.contains(client.getId()))
+                .collect(Collectors.toList());
     }
 
     private void validateClient(Client client) {

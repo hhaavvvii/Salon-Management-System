@@ -189,17 +189,30 @@ public class ReportsController {
         // Revenue
         List<RevenueReportRow> revenueData = reportService.generateRevenueReport(from, to, null, null);
         revenueTable.setItems(FXCollections.observableArrayList(revenueData));
+        System.out.println("Revenue loaded: " + revenueData.size());
 
         // Employee Load
         List<EmployeeLoadReportRow> employeeData = reportService.generateEmployeeLoadReport(from, to);
+        System.out.println("Employee data loaded: " + employeeData.size());
+        if (!employeeData.isEmpty()) {
+            System.out.println("First employee: " + employeeData.get(0));
+        }
         employeeLoadTable.setItems(FXCollections.observableArrayList(employeeData));
 
         // Client Activity
         List<ClientActivityReportRow> clientData = reportService.generateClientActivityReport(from, to);
+        System.out.println("Client data loaded: " + clientData.size());
+        if (!clientData.isEmpty()) {
+            System.out.println("First client: " + clientData.get(0));
+        }
         clientActivityTable.setItems(FXCollections.observableArrayList(clientData));
 
         // Services
         List<ServiceReportRow> serviceData = reportService.generateServiceStatistics(from, to);
+        System.out.println("Service data loaded: " + serviceData.size());
+        if (!serviceData.isEmpty()) {
+            System.out.println("First service: " + serviceData.get(0));
+        }
         servicesTable.setItems(FXCollections.observableArrayList(serviceData));
     }
 

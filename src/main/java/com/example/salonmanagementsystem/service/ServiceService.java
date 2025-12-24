@@ -1,29 +1,51 @@
 package com.example.salonmanagementsystem.service;
 
+import com.example.salonmanagementsystem.app.SessionContext;
 import com.example.salonmanagementsystem.dao.ServiceDao;
 import com.example.salonmanagementsystem.dao.impl.ServiceDaoImpl;
+import com.example.salonmanagementsystem.exceptions.AccessDeniedException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ServiceService {
 
     private final ServiceDao serviceDao = new ServiceDaoImpl();
 
+    /**
+     * Получить все услуги
+     * MASTER и ADMIN видят все услуги (фильтрация не требуется)
+     */
     public List<Service> getAllServices() {
         return serviceDao.findAll();
     }
 
+    /**
+     * Получить активные услуги
+     */
     public List<Service> getActiveServices() {
         return serviceDao.findActiveServices();
     }
 
+    /**
+     * Поиск услуг
+     */
     public List<Service> searchServices(String name, String category, Boolean active) {
         return serviceDao.findByFilters(name, category, active);
     }
 
+    /**
+     * Создать услугу
+     * MASTER не может создавать услуги
+     */
     public void createService(Service service) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot create services");
+        }
+
         validateService(service);
 
         // Проверка уникальности (название + категория)
@@ -36,7 +58,16 @@ public class ServiceService {
         serviceDao.insert(service);
     }
 
+    /**
+     * Обновить услугу
+     * MASTER не может обновлять услуги
+     */
     public void updateService(Service service) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot edit services");
+        }
+
         if (service.getId() == null) {
             throw new ValidationException("Service ID is required for update");
         }
@@ -53,8 +84,57 @@ public class ServiceService {
         serviceDao.update(service);
     }
 
+    /**
+     * Удалить услугу
+     * MASTER не может удалять услуги
+     */
+    public void deleteService(long serviceId) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot delete services");
+        }
+
+        // Проверка существования услуги
+        Optional<Service> service = serviceDao.findById(serviceId);
+        if (service.isEmpty()) {
+            throw new ValidationException("Service not found with ID: " + serviceId);
+        }
+
+        // Удаление услуги
+        serviceDao.delete(serviceId);
+    }
+
+    /**
+     * Деактивировать услугу
+     * MASTER не может деактивировать услуги
+     */
     public void deactivateService(long serviceId) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot deactivate services");
+        }
+
         serviceDao.setInactive(serviceId);
+    }
+
+    /**
+     * Активировать услугу
+     * MASTER не может активировать услуги
+     */
+    public void activateService(long serviceId) {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            throw new AccessDeniedException("Access denied: masters cannot activate services");
+        }
+
+        serviceDao.setActive(serviceId);
+    }
+
+    /**
+     * Получить услугу по ID
+     */
+    public Optional<Service> getServiceById(long serviceId) {
+        return serviceDao.findById(serviceId);
     }
 
     private void validateService(Service service) {

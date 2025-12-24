@@ -109,23 +109,6 @@
                         </HBox>
                     </graphic>
                 </Button>
-
-                <Separator style="-fx-background-color: white; -fx-min-height: 1; -fx-pref-height: 1; -fx-max-height: 1;">
-                    <VBox.margin>
-                        <Insets top="8" bottom="8"/>
-                    </VBox.margin>
-                </Separator>
-
-                <Button fx:id="settingsButton" onAction="#openSettings" maxWidth="Infinity"
-                        style="-fx-background-color: transparent; -fx-padding: 10 15; -fx-cursor: hand; -fx-background-radius: 5;">
-                    <graphic>
-                        <HBox spacing="10" alignment="CENTER_LEFT">
-                            <Label text="⚙️" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 20; -fx-alignment: CENTER;"/>
-                            <Label text="Settings" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
-                        </HBox>
-                    </graphic>
-                </Button>
-
             </VBox>
 
             <!-- Кнопка Logout внизу -->

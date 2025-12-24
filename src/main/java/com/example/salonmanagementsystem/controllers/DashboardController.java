@@ -28,14 +28,29 @@ public class DashboardController {
     @FXML private Button appointmentsButton;
     @FXML private Button paymentsButton;
     @FXML private Button reportsButton;
-    @FXML private Button settingsButton;
 
     private Button activeButton = null;
 
     @FXML
     public void initialize() {
         loadUserInfo();
+        configureAccessByRole();
         showWelcomeScreen();
+    }
+
+    private void configureAccessByRole() {
+        if (SessionContext.isMaster()) {
+            // Скрыть недоступные для MASTER окна
+            paymentsButton.setVisible(false);
+            paymentsButton.setManaged(false);
+
+            reportsButton.setVisible(false);
+            reportsButton.setManaged(false);
+
+            employeesButton.setVisible(false);
+            employeesButton.setManaged(false);
+
+        }
     }
 
     // ========== USER INFO ==========
@@ -62,6 +77,10 @@ public class DashboardController {
 
     @FXML
     private void openEmployees() {
+        if (SessionContext.isMaster()) {
+            showError("Access denied: insufficient permissions");
+            return;
+        }
         loadContent("/fxml/employees.fxml");
         setActiveButton(employeesButton);
     }
@@ -80,20 +99,22 @@ public class DashboardController {
 
     @FXML
     private void openPayments() {
+        if (SessionContext.isMaster()) {
+            showError("Access denied: insufficient permissions");
+            return;
+        }
         loadContent("/fxml/payments.fxml");
         setActiveButton(paymentsButton);
     }
 
     @FXML
     private void openReports() {
+        if (SessionContext.isMaster()) {
+            showError("Access denied: insufficient permissions");
+            return;
+        }
         loadContent("/fxml/reports.fxml");
         setActiveButton(reportsButton);
-    }
-
-    @FXML
-    private void openSettings() {
-        loadContent("/fxml/settings.fxml");
-        setActiveButton(settingsButton);
     }
 
     @FXML

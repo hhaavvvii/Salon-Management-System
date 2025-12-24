@@ -6,7 +6,6 @@ import com.example.salonmanagementsystem.model.Role;
 import com.example.salonmanagementsystem.model.User;
 import com.example.salonmanagementsystem.util.PasswordUtil;
 
-import java.util.Optional;
 
 public class AuthService {
     private UserDao userDao;

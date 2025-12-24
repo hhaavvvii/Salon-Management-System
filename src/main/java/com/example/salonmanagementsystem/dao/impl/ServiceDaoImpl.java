@@ -143,17 +143,21 @@ public class ServiceDaoImpl implements ServiceDao {
     }
 
     @Override
-    public void setInactive(long id) {
-        String sql = "UPDATE services SET active = 0 WHERE id = ?";
+    public void setInactive(long serviceId) {
+        String sql = "UPDATE services SET is_active = 0 WHERE id = ?";
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setLong(1, id);
-            ps.executeUpdate();
+            ps.setLong(1, serviceId);
+            int updated = ps.executeUpdate();
+
+            if (updated == 0) {
+                throw new RuntimeException("Service not found with ID: " + serviceId);
+            }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Error deactivating service", e);
+            throw new RuntimeException("Error deactivating service with ID: " + serviceId, e);
         }
     }
 
@@ -173,6 +177,40 @@ public class ServiceDaoImpl implements ServiceDao {
 
         } catch (SQLException e) {
             throw new RuntimeException("Error checking service existence", e);
+        }
+    }
+
+    @Override
+    public void delete(long serviceId) {
+        String sql = "DELETE FROM services WHERE id = ?";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, serviceId);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error deleting service with ID: " + serviceId, e);
+        }
+    }
+
+    @Override
+    public void setActive(long serviceId) {
+        String sql = "UPDATE services SET is_active = 1 WHERE id = ?";
+
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, serviceId);
+            int updated = ps.executeUpdate();
+
+            if (updated == 0) {
+                throw new RuntimeException("Service not found with ID: " + serviceId);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error activating service with ID: " + serviceId, e);
         }
     }
 

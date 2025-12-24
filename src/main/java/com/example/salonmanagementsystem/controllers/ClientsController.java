@@ -1,5 +1,7 @@
 package com.example.salonmanagementsystem.controllers;
 
+import com.example.salonmanagementsystem.app.SessionContext;
+import com.example.salonmanagementsystem.exceptions.AccessDeniedException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Client;
 import com.example.salonmanagementsystem.service.ClientService;
@@ -8,6 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 
 import java.util.List;
 
@@ -36,6 +39,13 @@ public class ClientsController {
     @FXML private TextArea notesField;
     @FXML private Button saveButton;
 
+    @FXML private Button createButton;
+    @FXML private Button updateButton;
+    @FXML private Button deleteButton;
+    @FXML private DatePicker dobPicker;
+    @FXML private TextArea notesArea;
+    @FXML private VBox formContainer;
+
     private final ClientService clientService = new ClientService();
     private final ObservableList<Client> clientData = FXCollections.observableArrayList();
 
@@ -47,7 +57,61 @@ public class ClientsController {
         setupTable();
         setupFilters();
         setupForm();
+        configureMasterMode(); // ← Настройка для MASTER
         loadData();
+    }
+
+    /**
+     * Настройка UI для роли MASTER (read-only режим)
+     */
+    private void configureMasterMode() {
+        if (SessionContext.isMaster()) {
+            // Скрыть кнопку сохранения
+            if (saveButton != null) {
+                saveButton.setVisible(false);
+                saveButton.setManaged(false);
+            }
+
+            // Скрыть кнопки управления (если есть)
+            if (createButton != null) {
+                createButton.setVisible(false);
+                createButton.setManaged(false);
+            }
+
+            if (updateButton != null) {
+                updateButton.setVisible(false);
+                updateButton.setManaged(false);
+            }
+
+            if (deleteButton != null) {
+                deleteButton.setVisible(false);
+                deleteButton.setManaged(false);
+            }
+
+            // Заблокировать все поля формы
+            if (firstNameField != null) firstNameField.setEditable(false);
+            if (lastNameField != null) lastNameField.setEditable(false);
+            if (phoneField != null) phoneField.setEditable(false);
+            if (emailField != null) emailField.setEditable(false);
+            if (notesField != null) notesField.setEditable(false);
+            if (dobPicker != null) dobPicker.setDisable(true);
+            if (notesArea != null) notesArea.setEditable(false);
+
+            // Обновить заголовок формы
+            if (formTitle != null) {
+                formTitle.setText("Client Details (Read-Only)");
+                formTitle.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
+            }
+
+            // Добавить информационное сообщение (если есть контейнер)
+            if (formContainer != null) {
+                Label infoLabel = new Label("⚠️ Read-only mode: you can only view clients from your appointments");
+                infoLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold; -fx-padding: 10; -fx-background-color: #f8d7da; -fx-background-radius: 5;");
+                infoLabel.setWrapText(true);
+                infoLabel.setMaxWidth(Double.MAX_VALUE);
+                formContainer.getChildren().add(0, infoLabel);
+            }
+        }
     }
 
     private void setupTable() {
@@ -102,6 +166,9 @@ public class ClientsController {
         clientsTable.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldSelection, newSelection) -> {
                     selectedClient = newSelection;
+                    if (newSelection != null) {
+                        fillFormWithClient(newSelection);
+                    }
                 }
         );
     }
@@ -119,6 +186,7 @@ public class ClientsController {
 
     private void loadData() {
         try {
+            // Service автоматически фильтрует для MASTER
             clientData.setAll(clientService.getAllClients());
         } catch (Exception e) {
             showError("Failed to load clients: " + e.getMessage());
@@ -141,6 +209,7 @@ public class ClientsController {
                 activeFilter = status.equals("ACTIVE");
             }
 
+            // Service автоматически фильтрует для MASTER
             List<Client> results = clientService.searchClients(name, phone, activeFilter);
             clientData.setAll(results);
 
@@ -163,6 +232,12 @@ public class ClientsController {
 
     @FXML
     private void onSave() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot create or edit clients");
+            return;
+        }
+
         try {
             validateForm();
 
@@ -186,6 +261,8 @@ public class ClientsController {
             onClear();
 
         } catch (ValidationException e) {
+            showError(e.getMessage());
+        } catch (AccessDeniedException e) {
             showError(e.getMessage());
         } catch (Exception e) {
             showError("Error saving client: " + e.getMessage());
@@ -219,6 +296,12 @@ public class ClientsController {
 
     @FXML
     private void onEdit() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot edit clients");
+            return;
+        }
+
         if (selectedClient == null) {
             showWarning("Please select a client to edit");
             return;
@@ -242,6 +325,12 @@ public class ClientsController {
 
     @FXML
     private void onDeactivate() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot deactivate clients");
+            return;
+        }
+
         if (selectedClient == null) {
             showWarning("Please select a client to deactivate");
             return;
@@ -256,7 +345,7 @@ public class ClientsController {
         confirmation.setTitle("Confirm Deactivation");
         confirmation.setHeaderText("Deactivate Client");
         confirmation.setContentText(
-                "Are you sure you want to deactivate " + selectedClient.getFullName() + "?\n" +
+                "Are you sure you want to deactivate " + selectedClient.getFirstName() + " " + selectedClient.getLastName() + "?\n" +
                         "This client will not be available for new appointments."
         );
 
@@ -267,6 +356,8 @@ public class ClientsController {
                     showSuccess("Client deactivated successfully!");
                     loadData();
                     onClear();
+                } catch (AccessDeniedException e) {
+                    showError(e.getMessage());
                 } catch (Exception e) {
                     showError("Error deactivating client: " + e.getMessage());
                 }
@@ -297,16 +388,22 @@ public class ClientsController {
 
     private void setAddMode() {
         isEditMode = false;
-        formTitle.setText("Add New Client");
-        saveButton.setText("Save Client");
-        saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+
+        if (!SessionContext.isMaster()) {
+            formTitle.setText("Add New Client");
+            saveButton.setText("Save Client");
+            saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+        }
     }
 
     private void setEditMode() {
         isEditMode = true;
-        formTitle.setText("Edit Client");
-        saveButton.setText("Update Client");
-        saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-size: 14px; -fx-padding: 10;");
+
+        if (!SessionContext.isMaster()) {
+            formTitle.setText("Edit Client");
+            saveButton.setText("Update Client");
+            saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-size: 14px; -fx-padding: 10;");
+        }
     }
 
     /* ==========================================================

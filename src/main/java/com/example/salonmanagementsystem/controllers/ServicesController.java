@@ -1,5 +1,7 @@
 package com.example.salonmanagementsystem.controllers;
 
+import com.example.salonmanagementsystem.app.SessionContext;
+import com.example.salonmanagementsystem.exceptions.AccessDeniedException;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Service;
 import com.example.salonmanagementsystem.service.ServiceService;
@@ -8,6 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 
 import java.util.List;
 
@@ -35,6 +38,11 @@ public class ServicesController {
     @FXML private Spinner<Integer> durationSpinner;
     @FXML private ComboBox<String> statusBox;
     @FXML private Button saveButton;
+    @FXML private Button createButton;
+    @FXML private Button updateButton;
+    @FXML private Button deleteButton;
+    @FXML private VBox formContainer;
+    @FXML private TextArea descriptionArea;
 
     private final ServiceService serviceService = new ServiceService();
     private final ObservableList<Service> serviceData = FXCollections.observableArrayList();
@@ -52,7 +60,60 @@ public class ServicesController {
         setupTable();
         setupFilters();
         setupForm();
+        configureMasterMode(); // ← Настройка для MASTER
         loadData();
+    }
+
+    /**
+     * Настройка UI для роли MASTER (read-only режим)
+     */
+    private void configureMasterMode() {
+        if (SessionContext.isMaster()) {
+            // Скрыть кнопку сохранения
+            if (saveButton != null) {
+                saveButton.setVisible(false);
+                saveButton.setManaged(false);
+            }
+
+            // Скрыть кнопки управления (если есть)
+            if (createButton != null) {
+                createButton.setVisible(false);
+                createButton.setManaged(false);
+            }
+
+            if (updateButton != null) {
+                updateButton.setVisible(false);
+                updateButton.setManaged(false);
+            }
+
+            if (deleteButton != null) {
+                deleteButton.setVisible(false);
+                deleteButton.setManaged(false);
+            }
+
+            // Заблокировать все поля формы
+            if (nameField != null) nameField.setEditable(false);
+            if (descriptionArea != null) descriptionArea.setEditable(false);
+            if (categoryBox != null) categoryBox.setDisable(true);
+            if (priceField != null) priceField.setEditable(false);
+            if (durationSpinner != null) durationSpinner.setDisable(true);
+            if (statusBox != null) statusBox.setDisable(true);
+
+            // Обновить заголовок формы
+            if (formTitle != null) {
+                formTitle.setText("Service Details (Read-Only)");
+                formTitle.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
+            }
+
+            // Добавить информационное сообщение (если есть контейнер)
+            if (formContainer != null) {
+                Label infoLabel = new Label("⚠️ Read-only mode: viewing services catalog");
+                infoLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold; -fx-padding: 10; -fx-background-color: #f8d7da; -fx-background-radius: 5;");
+                infoLabel.setWrapText(true);
+                infoLabel.setMaxWidth(Double.MAX_VALUE);
+                formContainer.getChildren().add(0, infoLabel);
+            }
+        }
     }
 
     private void setupTable() {
@@ -107,6 +168,9 @@ public class ServicesController {
         servicesTable.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldSelection, newSelection) -> {
                     selectedService = newSelection;
+                    if (newSelection != null) {
+                        fillFormWithService(newSelection);
+                    }
                 }
         );
     }
@@ -126,6 +190,7 @@ public class ServicesController {
     private void setupForm() {
         // Заполнение ComboBox категорий (с возможностью ввода своей)
         categoryBox.setItems(FXCollections.observableArrayList(CATEGORIES));
+        categoryBox.setEditable(true);
 
         // Spinner для длительности (15-480 минут, шаг 15)
         durationSpinner.setValueFactory(
@@ -188,6 +253,12 @@ public class ServicesController {
 
     @FXML
     private void onSave() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot create or edit services");
+            return;
+        }
+
         try {
             validateForm();
 
@@ -219,6 +290,8 @@ public class ServicesController {
             onClear();
 
         } catch (ValidationException e) {
+            showError(e.getMessage());
+        } catch (AccessDeniedException e) {
             showError(e.getMessage());
         } catch (Exception e) {
             showError("Error saving service: " + e.getMessage());
@@ -256,6 +329,12 @@ public class ServicesController {
 
     @FXML
     private void onEdit() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot edit services");
+            return;
+        }
+
         if (selectedService == null) {
             showWarning("Please select a service to edit");
             return;
@@ -274,11 +353,58 @@ public class ServicesController {
     }
 
     /* ==========================================================
+       DELETE
+       ========================================================== */
+
+    @FXML
+    private void onDelete() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot delete services");
+            return;
+        }
+
+        if (selectedService == null) {
+            showWarning("Please select a service to delete");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Confirm Deletion");
+        confirmation.setHeaderText("Delete Service");
+        confirmation.setContentText(
+                "Are you sure you want to delete '" + selectedService.getName() + "'?\n" +
+                        "This action cannot be undone."
+        );
+
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    serviceService.deleteService(selectedService.getId());
+                    showSuccess("Service deleted successfully!");
+                    loadData();
+                    onClear();
+                } catch (AccessDeniedException e) {
+                    showError(e.getMessage());
+                } catch (Exception e) {
+                    showError("Error deleting service: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    /* ==========================================================
        DEACTIVATE
        ========================================================== */
 
     @FXML
     private void onDeactivate() {
+        // Проверка прав доступа
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot deactivate services");
+            return;
+        }
+
         if (selectedService == null) {
             showWarning("Please select a service to deactivate");
             return;
@@ -304,6 +430,8 @@ public class ServicesController {
                     showSuccess("Service deactivated successfully!");
                     loadData();
                     onClear();
+                } catch (AccessDeniedException e) {
+                    showError(e.getMessage());
                 } catch (Exception e) {
                     showError("Error deactivating service: " + e.getMessage());
                 }
@@ -334,16 +462,26 @@ public class ServicesController {
 
     private void setAddMode() {
         isEditMode = false;
-        formTitle.setText("Add New Service");
-        saveButton.setText("Save Service");
-        saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+
+        if (!SessionContext.isMaster()) {
+            formTitle.setText("Add New Service");
+            if (saveButton != null) {
+                saveButton.setText("Save Service");
+                saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+            }
+        }
     }
 
     private void setEditMode() {
         isEditMode = true;
-        formTitle.setText("Edit Service");
-        saveButton.setText("Update Service");
-        saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-size: 14px; -fx-padding: 10;");
+
+        if (!SessionContext.isMaster()) {
+            formTitle.setText("Edit Service");
+            if (saveButton != null) {
+                saveButton.setText("Update Service");
+                saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-size: 14px; -fx-padding: 10;");
+            }
+        }
     }
 
     /* ==========================================================

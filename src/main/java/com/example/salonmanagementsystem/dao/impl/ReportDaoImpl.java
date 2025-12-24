@@ -21,35 +21,44 @@ import java.util.List;
  */
 public class ReportDaoImpl implements ReportDao {
 
+
     @Override
     public List<RevenueReportRow> getRevenueByPeriod(LocalDate from, LocalDate to) {
         String sql = """
-            SELECT 
-                DATE(p.created_at) as payment_date,
-                e.first_name || ' ' || e.last_name as employee_name,
-                s.name as service_name,
-                COUNT(p.id) as completed_count,
-                SUM(p.amount) as total_revenue
-            FROM payments p
-            JOIN appointments a ON p.appointment_id = a.id
-            JOIN employees e ON a.employee_id = e.id
-            JOIN services s ON a.service_id = s.id
-            WHERE p.status = 'PAID'
-              AND DATE(p.created_at) BETWEEN ? AND ?
-            GROUP BY DATE(p.created_at), e.id, s.id
-            ORDER BY payment_date DESC, total_revenue DESC
-        """;
+        SELECT 
+            DATE(p.created_at) as payment_date,
+            e.first_name || ' ' || e.last_name as employee_name,
+            s.name as service_name,
+            COUNT(p.id) as completed_count,
+            SUM(p.amount) as total_revenue
+        FROM payments p
+        JOIN appointments a ON p.appointment_id = a.id
+        JOIN employees e ON a.employee_id = e.id
+        JOIN services s ON a.service_id = s.id
+        WHERE p.status = 'PAID'
+          AND p.created_at BETWEEN ? AND ?
+        GROUP BY DATE(p.created_at), e.id, s.id
+        ORDER BY payment_date DESC, total_revenue DESC
+    """;
 
         List<RevenueReportRow> rows = new ArrayList<>();
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
+            System.out.println("=== SQL DEBUG ===");
+            System.out.println("From: " + from.toString());
+            System.out.println("To: " + to.toString());
+
             ps.setString(1, from.toString());
             ps.setString(2, to.toString());
 
+            System.out.println("Executing query...");
             ResultSet rs = ps.executeQuery();
+
+            int count = 0;
             while (rs.next()) {
+                count++;
                 RevenueReportRow row = new RevenueReportRow();
                 row.setDate(LocalDate.parse(rs.getString("payment_date")));
                 row.setEmployeeName(rs.getString("employee_name"));
@@ -57,9 +66,17 @@ public class ReportDaoImpl implements ReportDao {
                 row.setCompletedCount(rs.getInt("completed_count"));
                 row.setTotalRevenue(rs.getDouble("total_revenue"));
                 rows.add(row);
+
+                if (count == 1) {
+                    System.out.println("First row: " + row);
+                }
             }
 
+            System.out.println("Total rows found: " + count);
+
         } catch (SQLException e) {
+            System.out.println("SQL ERROR: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Error getting revenue by period", e);
         }
 
@@ -69,22 +86,22 @@ public class ReportDaoImpl implements ReportDao {
     @Override
     public List<RevenueReportRow> getRevenueByEmployee(Long employeeId, LocalDate from, LocalDate to) {
         String sql = """
-            SELECT 
-                DATE(p.created_at) as payment_date,
-                e.first_name || ' ' || e.last_name as employee_name,
-                s.name as service_name,
-                COUNT(p.id) as completed_count,
-                SUM(p.amount) as total_revenue
-            FROM payments p
-            JOIN appointments a ON p.appointment_id = a.id
-            JOIN employees e ON a.employee_id = e.id
-            JOIN services s ON a.service_id = s.id
-            WHERE p.status = 'PAID'
-              AND a.employee_id = ?
-              AND DATE(p.created_at) BETWEEN ? AND ?
-            GROUP BY DATE(p.created_at), e.id, s.id
-            ORDER BY payment_date DESC
-        """;
+        SELECT 
+            DATE(p.created_at) as payment_date,
+            e.first_name || ' ' || e.last_name as employee_name,
+            s.name as service_name,
+            COUNT(p.id) as completed_count,
+            SUM(p.amount) as total_revenue
+        FROM payments p
+        JOIN appointments a ON p.appointment_id = a.id
+        JOIN employees e ON a.employee_id = e.id
+        JOIN services s ON a.service_id = s.id
+        WHERE p.status = 'PAID'
+          AND a.employee_id = ?
+          AND p.created_at BETWEEN ? AND ?
+        GROUP BY DATE(p.created_at), e.id, s.id
+        ORDER BY payment_date DESC
+    """;
 
         List<RevenueReportRow> rows = new ArrayList<>();
 
@@ -116,22 +133,22 @@ public class ReportDaoImpl implements ReportDao {
     @Override
     public List<RevenueReportRow> getRevenueByService(Long serviceId, LocalDate from, LocalDate to) {
         String sql = """
-            SELECT 
-                DATE(p.created_at) as payment_date,
-                e.first_name || ' ' || e.last_name as employee_name,
-                s.name as service_name,
-                COUNT(p.id) as completed_count,
-                SUM(p.amount) as total_revenue
-            FROM payments p
-            JOIN appointments a ON p.appointment_id = a.id
-            JOIN employees e ON a.employee_id = e.id
-            JOIN services s ON a.service_id = s.id
-            WHERE p.status = 'PAID'
-              AND a.service_id = ?
-              AND DATE(p.created_at) BETWEEN ? AND ?
-            GROUP BY DATE(p.created_at), e.id, s.id
-            ORDER BY payment_date DESC
-        """;
+        SELECT 
+            DATE(p.created_at) as payment_date,
+            e.first_name || ' ' || e.last_name as employee_name,
+            s.name as service_name,
+            COUNT(p.id) as completed_count,
+            SUM(p.amount) as total_revenue
+        FROM payments p
+        JOIN appointments a ON p.appointment_id = a.id
+        JOIN employees e ON a.employee_id = e.id
+        JOIN services s ON a.service_id = s.id
+        WHERE p.status = 'PAID'
+          AND a.service_id = ?
+          AND p.created_at BETWEEN ? AND ?
+        GROUP BY DATE(p.created_at), e.id, s.id
+        ORDER BY payment_date DESC
+    """;
 
         List<RevenueReportRow> rows = new ArrayList<>();
 
@@ -162,21 +179,20 @@ public class ReportDaoImpl implements ReportDao {
 
     @Override
     public List<EmployeeLoadReportRow> getEmployeeLoad(LocalDate from, LocalDate to) {
-
         String sql = """
-        SELECT
-            e.first_name || ' ' || e.last_name AS employeeName,
-            COUNT(a.id) AS totalAppointments,
-            SUM(
-                (strftime('%s', a.end_time) - strftime('%s', a.start_time)) / 60
-            ) AS totalMinutes,
-            SUM(p.amount) AS totalRevenue
+        SELECT 
+            e.first_name || ' ' || e.last_name as employee_name,
+            COUNT(a.id) as total_appointments,
+            SUM(s.duration_minutes) as total_minutes,
+            COALESCE(SUM(p.amount), 0) as total_revenue
         FROM employees e
-        JOIN appointments a ON a.employee_id = e.id
-        JOIN payments p ON p.appointment_id = a.id
-        WHERE a.status = 'COMPLETED'
-          AND DATE(a.start_time) BETWEEN ? AND ?
+        LEFT JOIN appointments a ON e.id = a.employee_id 
+            AND a.status = 'COMPLETED'
+            AND DATE(a.start_time) BETWEEN ? AND ?
+        LEFT JOIN services s ON a.service_id = s.id
+        LEFT JOIN payments p ON a.id = p.appointment_id AND p.status = 'PAID'
         GROUP BY e.id
+        ORDER BY total_revenue DESC
     """;
 
         List<EmployeeLoadReportRow> rows = new ArrayList<>();
@@ -188,32 +204,28 @@ public class ReportDaoImpl implements ReportDao {
             ps.setString(2, to.toString());
 
             ResultSet rs = ps.executeQuery();
-
-            long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(from, to) + 1;
-            int availableMinutes = (int) (daysBetween * 8 * 60); // 8 часов в день
-
             while (rs.next()) {
                 EmployeeLoadReportRow row = new EmployeeLoadReportRow();
+                row.setEmployeeName(rs.getString("employee_name"));
+                row.setTotalAppointments(rs.getInt("total_appointments"));
 
-                row.setEmployeeName(rs.getString("employeeName"));
-                row.setTotalAppointments(rs.getInt("totalAppointments"));
-
-                int totalMinutes = rs.getInt("totalMinutes");
+                Integer totalMinutes = rs.getObject("total_minutes") != null
+                        ? rs.getInt("total_minutes") : 0;
                 row.setTotalMinutes(totalMinutes);
 
-                row.setTotalRevenue(rs.getDouble("totalRevenue"));
+                row.setTotalRevenue(rs.getDouble("total_revenue"));
 
+                long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(from, to) + 1;
+                int availableMinutes = (int) (daysBetween * 8 * 60);
                 double loadPercentage = availableMinutes > 0
-                        ? (totalMinutes * 100.0 / availableMinutes)
-                        : 0;
-
+                        ? (totalMinutes * 100.0 / availableMinutes) : 0;
                 row.setLoadPercentage(Math.min(loadPercentage, 100.0));
 
                 rows.add(row);
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Error getting employee load report", e);
+            throw new RuntimeException("Error getting employee load", e);
         }
 
         return rows;
@@ -224,21 +236,21 @@ public class ReportDaoImpl implements ReportDao {
     @Override
     public List<ClientActivityReportRow> getClientActivity(LocalDate from, LocalDate to) {
         String sql = """
-            SELECT 
-                c.first_name || ' ' || c.last_name as client_name,
-                c.phone,
-                COUNT(a.id) as total_visits,
-                COALESCE(SUM(p.amount), 0) as total_spent,
-                MAX(DATE(a.start_time)) as last_visit_date
-            FROM clients c
-            LEFT JOIN appointments a ON c.id = a.client_id 
-                AND a.status = 'COMPLETED'
-                AND DATE(a.start_time) BETWEEN ? AND ?
-            LEFT JOIN payments p ON a.id = p.appointment_id AND p.status = 'PAID'
-            GROUP BY c.id
-            HAVING COUNT(a.id) > 0
-            ORDER BY total_spent DESC
-        """;
+        SELECT 
+            c.first_name || ' ' || c.last_name as client_name,
+            c.phone,
+            COUNT(a.id) as total_visits,
+            COALESCE(SUM(p.amount), 0) as total_spent,
+            MAX(DATE(a.start_time)) as last_visit_date
+        FROM clients c
+        LEFT JOIN appointments a ON c.id = a.client_id 
+            AND a.status = 'COMPLETED'
+            AND DATE(a.start_time) BETWEEN ? AND ?
+        LEFT JOIN payments p ON a.id = p.appointment_id AND p.status = 'PAID'
+        GROUP BY c.id
+        HAVING COUNT(a.id) > 0
+        ORDER BY total_spent DESC
+    """;
 
         List<ClientActivityReportRow> rows = new ArrayList<>();
 
@@ -269,20 +281,20 @@ public class ReportDaoImpl implements ReportDao {
     @Override
     public List<ServiceReportRow> getServiceStatistics(LocalDate from, LocalDate to) {
         String sql = """
-            SELECT 
-                s.name as service_name,
-                COUNT(a.id) as times_booked,
-                COALESCE(SUM(p.amount), 0) as total_revenue,
-                COALESCE(AVG(p.amount), 0) as average_price
-            FROM services s
-            LEFT JOIN appointments a ON s.id = a.service_id 
-                AND a.status = 'COMPLETED'
-                AND DATE(a.start_time) BETWEEN ? AND ?
-            LEFT JOIN payments p ON a.id = p.appointment_id AND p.status = 'PAID'
-            GROUP BY s.id
-            HAVING COUNT(a.id) > 0
-            ORDER BY total_revenue DESC
-        """;
+        SELECT 
+            s.name as service_name,
+            COUNT(a.id) as times_booked,
+            COALESCE(SUM(p.amount), 0) as total_revenue,
+            COALESCE(AVG(p.amount), 0) as average_price
+        FROM services s
+        LEFT JOIN appointments a ON s.id = a.service_id 
+            AND a.status = 'COMPLETED'
+            AND DATE(a.start_time) BETWEEN ? AND ?
+        LEFT JOIN payments p ON a.id = p.appointment_id AND p.status = 'PAID'
+        GROUP BY s.id
+        HAVING COUNT(a.id) > 0
+        ORDER BY total_revenue DESC
+    """;
 
         List<ServiceReportRow> rows = new ArrayList<>();
 
@@ -312,11 +324,11 @@ public class ReportDaoImpl implements ReportDao {
     @Override
     public Double getTotalRevenue(LocalDate from, LocalDate to) {
         String sql = """
-            SELECT COALESCE(SUM(amount), 0) as total
-            FROM payments
-            WHERE status = 'PAID'
-              AND DATE(created_at) BETWEEN ? AND ?
-        """;
+        SELECT COALESCE(SUM(amount), 0) as total
+        FROM payments
+        WHERE status = 'PAID'
+          AND created_at BETWEEN ? AND ?
+    """;
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
