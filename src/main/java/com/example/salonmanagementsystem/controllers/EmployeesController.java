@@ -3,30 +3,23 @@ package com.example.salonmanagementsystem.controllers;
 import com.example.salonmanagementsystem.exceptions.ValidationException;
 import com.example.salonmanagementsystem.model.Employee;
 import com.example.salonmanagementsystem.service.EmployeeService;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 
 import java.util.List;
 
 public class EmployeesController {
 
-    // Таблица
-    @FXML private TableView<Employee> employeesTable;
-    @FXML private TableColumn<Employee, String> idCol;
-    @FXML private TableColumn<Employee, String> firstNameCol;
-    @FXML private TableColumn<Employee, String> lastNameCol;
-    @FXML private TableColumn<Employee, String> positionCol;
-    @FXML private TableColumn<Employee, String> statusCol;
+    @FXML private ListView<Employee> employeesListView;
 
-    // Фильтры
     @FXML private TextField searchField;
     @FXML private ComboBox<String> positionFilter;
     @FXML private ComboBox<String> statusFilter;
 
-    // Форма
     @FXML private Label formTitle;
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
@@ -37,93 +30,76 @@ public class EmployeesController {
     private final EmployeeService employeeService = new EmployeeService();
     private final ObservableList<Employee> employeeData = FXCollections.observableArrayList();
 
-    private Employee selectedEmployee = null;
+    private Employee selectedEmployee;
     private boolean isEditMode = false;
 
-    // Позиции сотрудников
     private static final String[] POSITIONS = {
             "Master", "Administrator", "Manager", "Receptionist", "Stylist", "Colorist"
     };
 
     @FXML
     public void initialize() {
-        setupTable();
+        setupListView();
         setupFilters();
         setupForm();
         loadData();
     }
 
-    private void setupTable() {
-        // Настройка колонок
-        idCol.setCellValueFactory(data ->
-                new SimpleStringProperty(String.valueOf(data.getValue().getId()))
-        );
+    private void setupListView() {
+        employeesListView.setItems(employeeData);
 
-        firstNameCol.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getFirstName())
-        );
-
-        lastNameCol.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getLastName())
-        );
-
-        positionCol.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getPosition())
-        );
-
-        statusCol.setCellValueFactory(data ->
-                new SimpleStringProperty(data.getValue().getStatus())
-        );
-
-        // Цветовое выделение статуса
-        statusCol.setCellFactory(column -> new TableCell<>() {
+        employeesListView.setCellFactory(lv -> new ListCell<>() {
             @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-
-                if (empty || status == null) {
-                    setText(null);
-                    setStyle("");
+            protected void updateItem(Employee employee, boolean empty) {
+                super.updateItem(employee, empty);
+                if (empty || employee == null) {
+                    setGraphic(null);
                 } else {
-                    setText(status);
-                    if (status.equals("ACTIVE")) {
-                        setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    } else {
-                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                    }
+                    VBox card = new VBox(4);
+                    card.setPadding(new Insets(10));
+                    card.setStyle(
+                            "-fx-background-color: #f3e8ff;" +
+                                    "-fx-background-radius: 10;" +
+                                    "-fx-border-radius: 10;" +
+                                    "-fx-border-color: #d9cfff;" +
+                                    "-fx-border-width: 1;" +
+                                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4,0,0,1);"
+                    );
+
+                    Label name = new Label(employee.getFirstName() + " " + employee.getLastName());
+                    name.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+                    Label position = new Label("Position: " + employee.getPosition());
+                    Label status = new Label("Status: " + employee.getStatus());
+                    status.setStyle(employee.isActive()
+                            ? "-fx-text-fill: green; -fx-font-weight: bold;"
+                            : "-fx-text-fill: red; -fx-font-weight: bold;");
+
+                    card.getChildren().addAll(name, position, status);
+                    setGraphic(card);
                 }
             }
         });
 
-        employeesTable.setItems(employeeData);
-
-        // Обработка выбора строки
-        employeesTable.getSelectionModel().selectedItemProperty().addListener(
-                (obs, oldSelection, newSelection) -> {
-                    selectedEmployee = newSelection;
-                }
+        employeesListView.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldSel, newSel) -> selectedEmployee = newSel
         );
     }
 
     private void setupFilters() {
-        // Заполнение фильтра позиций
-        positionFilter.setItems(FXCollections.observableArrayList("ALL", "Master", "Administrator", "Manager", "Receptionist", "Stylist", "Colorist"));
+        positionFilter.setItems(FXCollections.observableArrayList(
+                "ALL", "Master", "Administrator", "Manager", "Receptionist", "Stylist", "Colorist"
+        ));
         positionFilter.setValue("ALL");
 
-        // Заполнение фильтра статусов
         statusFilter.setItems(FXCollections.observableArrayList("ALL", "ACTIVE", "INACTIVE"));
         statusFilter.setValue("ALL");
     }
 
     private void setupForm() {
-        // Заполнение ComboBox позиций
         positionBox.setItems(FXCollections.observableArrayList(POSITIONS));
-
-        // Заполнение ComboBox статусов
         statusBox.setItems(FXCollections.observableArrayList("ACTIVE", "INACTIVE"));
         statusBox.setValue("ACTIVE");
-
-        // Начальное состояние - режим добавления
         setAddMode();
     }
 
@@ -131,33 +107,21 @@ public class EmployeesController {
         try {
             employeeData.setAll(employeeService.getAllEmployees());
         } catch (Exception e) {
-            showError("Failed to load employees: " + e.getMessage());
+            showError(e.getMessage());
         }
     }
-
-    /* ==========================================================
-       SEARCH AND FILTER
-       ========================================================== */
 
     @FXML
     private void onSearch() {
         try {
             String name = searchField.getText();
-            String position = positionFilter.getValue();
-            String status = statusFilter.getValue();
+            String position = "ALL".equals(positionFilter.getValue()) ? null : positionFilter.getValue();
+            Boolean active = "ALL".equals(statusFilter.getValue()) ? null : "ACTIVE".equals(statusFilter.getValue());
 
-            Boolean activeFilter = null;
-            if (status != null && !status.equals("ALL")) {
-                activeFilter = status.equals("ACTIVE");
-            }
-
-            String positionValue = (position != null && !position.equals("ALL")) ? position : null;
-
-            List<Employee> results = employeeService.searchEmployees(name, positionValue, activeFilter);
-            employeeData.setAll(results);
-
+            List<Employee> result = employeeService.searchEmployees(name, position, active);
+            employeeData.setAll(result);
         } catch (Exception e) {
-            showError("Search failed: " + e.getMessage());
+            showError(e.getMessage());
         }
     }
 
@@ -169,130 +133,57 @@ public class EmployeesController {
         loadData();
     }
 
-    /* ==========================================================
-       SAVE (CREATE OR UPDATE)
-       ========================================================== */
-
     @FXML
     private void onSave() {
         try {
             validateForm();
 
-            Employee employee = isEditMode ? selectedEmployee : new Employee();
+            Employee e = isEditMode ? selectedEmployee : new Employee();
+            e.setFirstName(firstNameField.getText().trim());
+            e.setLastName(lastNameField.getText().trim());
+            e.setPosition(positionBox.getValue());
+            e.setActive("ACTIVE".equals(statusBox.getValue()));
 
-            employee.setFirstName(firstNameField.getText().trim());
-            employee.setLastName(lastNameField.getText().trim());
-            employee.setPosition(positionBox.getValue());
-            employee.setActive(statusBox.getValue().equals("ACTIVE"));
-
-            if (isEditMode) {
-                employeeService.updateEmployee(employee);
-                showSuccess("Employee updated successfully!");
-            } else {
-                employeeService.createEmployee(employee);
-                showSuccess("Employee created successfully!");
-            }
+            if (isEditMode) employeeService.updateEmployee(e);
+            else employeeService.createEmployee(e);
 
             loadData();
             onClear();
-
-        } catch (ValidationException e) {
-            showError(e.getMessage());
-        } catch (Exception e) {
-            showError("Error saving employee: " + e.getMessage());
-            e.printStackTrace();
+        } catch (Exception ex) {
+            showError(ex.getMessage());
         }
     }
-
-    private void validateForm() {
-        StringBuilder errors = new StringBuilder();
-
-        if (firstNameField.getText() == null || firstNameField.getText().trim().isEmpty()) {
-            errors.append("• First name is required\n");
-        }
-
-        if (lastNameField.getText() == null || lastNameField.getText().trim().isEmpty()) {
-            errors.append("• Last name is required\n");
-        }
-
-        if (positionBox.getValue() == null) {
-            errors.append("• Position is required\n");
-        }
-
-        if (statusBox.getValue() == null) {
-            errors.append("• Status is required\n");
-        }
-
-        if (errors.length() > 0) {
-            throw new ValidationException("Please fill all required fields:\n" + errors.toString());
-        }
-    }
-
-    /* ==========================================================
-       EDIT
-       ========================================================== */
 
     @FXML
     private void onEdit() {
         if (selectedEmployee == null) {
-            showWarning("Please select an employee to edit");
+            showWarning("Select an employee first");
             return;
         }
+        isEditMode = true;
+        formTitle.setText("Edit Employee");
+        saveButton.setText("Update Employee");
 
-        setEditMode();
-        fillFormWithEmployee(selectedEmployee);
+        firstNameField.setText(selectedEmployee.getFirstName());
+        lastNameField.setText(selectedEmployee.getLastName());
+        positionBox.setValue(selectedEmployee.getPosition());
+        statusBox.setValue(selectedEmployee.getStatus());
     }
-
-    private void fillFormWithEmployee(Employee employee) {
-        firstNameField.setText(employee.getFirstName());
-        lastNameField.setText(employee.getLastName());
-        positionBox.setValue(employee.getPosition());
-        statusBox.setValue(employee.getStatus());
-    }
-
-    /* ==========================================================
-       DEACTIVATE
-       ========================================================== */
 
     @FXML
     private void onDeactivate() {
         if (selectedEmployee == null) {
-            showWarning("Please select an employee to deactivate");
+            showWarning("Select an employee first");
             return;
         }
-
-        if (!selectedEmployee.isActive()) {
-            showWarning("Employee is already inactive");
-            return;
+        try {
+            employeeService.deactivateEmployee(selectedEmployee.getId());
+            loadData();
+            onClear();
+        } catch (Exception e) {
+            showError(e.getMessage());
         }
-
-        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmation.setTitle("Confirm Deactivation");
-        confirmation.setHeaderText("Deactivate Employee");
-        confirmation.setContentText(
-                "Are you sure you want to deactivate " + selectedEmployee.getFullName() + "?\n" +
-                        "This employee will not be available for new appointments."
-        );
-
-        confirmation.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                try {
-                    employeeService.deactivateEmployee(selectedEmployee.getId());
-                    showSuccess("Employee deactivated successfully!");
-                    loadData();
-                    onClear();
-                } catch (ValidationException e) {
-                    showError(e.getMessage());
-                } catch (Exception e) {
-                    showError("Error deactivating employee: " + e.getMessage());
-                }
-            }
-        });
     }
-
-    /* ==========================================================
-       CLEAR FORM
-       ========================================================== */
 
     @FXML
     private void onClear() {
@@ -300,55 +191,22 @@ public class EmployeesController {
         lastNameField.clear();
         positionBox.setValue(null);
         statusBox.setValue("ACTIVE");
-
         selectedEmployee = null;
         setAddMode();
-        employeesTable.getSelectionModel().clearSelection();
+        employeesListView.getSelectionModel().clearSelection();
     }
-
-    /* ==========================================================
-       UI STATE MANAGEMENT
-       ========================================================== */
 
     private void setAddMode() {
         isEditMode = false;
         formTitle.setText("Add New Employee");
         saveButton.setText("Save Employee");
-        saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
     }
 
-    private void setEditMode() {
-        isEditMode = true;
-        formTitle.setText("Edit Employee");
-        saveButton.setText("Update Employee");
-        saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-size: 14px; -fx-padding: 10;");
+    private void validateForm() {
+        if (firstNameField.getText().isEmpty() || lastNameField.getText().isEmpty() || positionBox.getValue() == null)
+            throw new ValidationException("Fill all required fields");
     }
 
-    /* ==========================================================
-       ALERT DIALOGS
-       ========================================================== */
-
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Operation Failed");
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    private void showSuccess(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Success");
-        alert.setHeaderText("Operation Completed");
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    private void showWarning(String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Warning");
-        alert.setHeaderText("Attention Required");
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
+    private void showError(String m) { new Alert(Alert.AlertType.ERROR, m).showAndWait(); }
+    private void showWarning(String m) { new Alert(Alert.AlertType.WARNING, m).showAndWait(); }
 }
