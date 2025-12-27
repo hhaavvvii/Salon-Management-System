@@ -7,122 +7,61 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.AppointmentsController"
-            prefHeight="700.0" prefWidth="1400.0">
+            prefHeight="700" prefWidth="1400"
+            style="-fx-background-color: #f3eefc;">
 
-    <!-- Верхняя панель: Фильтры -->
+    <!-- TOP: Filters -->
     <top>
-        <VBox spacing="10" style="-fx-background-color: #f8f9fa;">
+        <HBox spacing="12" alignment="CENTER"
+              style="-fx-background-color: #f8f6fc;">
             <padding>
-                <Insets top="15" right="15" bottom="15" left="15"/>
+                <Insets top="12" right="24" bottom="12" left="24"/>
             </padding>
 
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="Date:"/>
-                <DatePicker fx:id="filterDatePicker" promptText="Select date" prefWidth="150"/>
+            <DatePicker fx:id="calendarDatePicker" prefWidth="150"/>
+            <TextField fx:id="searchClientField" promptText="Search by client" prefWidth="180"/>
+            <ComboBox fx:id="filterEmployeeBox" promptText="All masters" prefWidth="160"/>
 
-                <Label text="Employee:"/>
-                <ComboBox fx:id="filterEmployeeBox" promptText="All employees" prefWidth="180"/>
-
-                <Label text="Status:"/>
-                <ComboBox fx:id="filterStatusBox" promptText="All statuses" prefWidth="120"/>
-
-                <Button text="Search" onAction="#onSearch"
-                        style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 5 15;"/>
-                <Button text="Reset" onAction="#onResetFilter"
-                        style="-fx-padding: 5 15;"/>
-            </HBox>
-        </VBox>
+            <Button text="Search" onAction="#onSearch"
+                    style="-fx-background-color: #6f42c1; -fx-text-fill: white;"/>
+            <Button text="Reset" onAction="#onReset"
+                    style="-fx-background-color: #e0d6f5; -fx-text-fill: #6f42c1;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
     </top>
 
-    <!-- Центр: Таблица с записями -->
+    <!-- CENTER: Calendar -->
     <center>
-        <TableView fx:id="table" BorderPane.alignment="CENTER">
-            <columns>
-                <TableColumn fx:id="idCol" text="ID" minWidth="50" prefWidth="50"/>
-                <TableColumn fx:id="dateCol" text="Date" minWidth="100" prefWidth="110"/>
-                <TableColumn fx:id="timeCol" text="Time" minWidth="70" prefWidth="80"/>
-                <TableColumn fx:id="clientCol" text="Client" minWidth="150" prefWidth="180"/>
-                <TableColumn fx:id="employeeCol" text="Employee" minWidth="150" prefWidth="180"/>
-                <TableColumn fx:id="serviceCol" text="Service" minWidth="150" prefWidth="200"/>
-                <TableColumn fx:id="durationCol" text="Duration (min)" minWidth="100" prefWidth="110"/>
-                <TableColumn fx:id="priceCol" text="Price (₸)" minWidth="100" prefWidth="110"/>
-                <TableColumn fx:id="statusCol" text="Status" minWidth="100" prefWidth="110"/>
-            </columns>
-        </TableView>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <VBox fx:id="calendarContainer" spacing="12">
+                <padding>
+                    <Insets top="15" right="15" bottom="15" left="15"/>
+                </padding>
+            </VBox>
+        </ScrollPane>
     </center>
 
-    <!-- Правая панель: Форма и действия -->
+    <!-- RIGHT: Form -->
     <right>
-        <VBox spacing="15" prefWidth="350" style="-fx-background-color: #f5f5f5;">
-            <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
-            </padding>
-
-            <Label fx:id="formTitle" text="Create Appointment"
-                   style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
-
+        <VBox spacing="16" prefWidth="300" style="-fx-background-color: #f4f2fa; -fx-padding: 20;">
+            <Label text="Create Appointment"
+                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #6f42c1;"/>
             <Separator/>
-
-            <!-- Форма создания -->
-            <VBox spacing="5">
-                <Label text="Client:*"/>
-                <ComboBox fx:id="clientBox" promptText="Select client" maxWidth="Infinity"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Service:*"/>
-                <ComboBox fx:id="serviceBox" promptText="Select service" maxWidth="Infinity"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Employee:*"/>
-                <ComboBox fx:id="employeeBox" promptText="Select employee" maxWidth="Infinity"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Date:*"/>
-                <DatePicker fx:id="datePicker" promptText="Select date" maxWidth="Infinity"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Time:*"/>
-                <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Spinner fx:id="hourSpinner" prefWidth="70" editable="true"/>
-                    <Label text=":"/>
-                    <Spinner fx:id="minuteSpinner" prefWidth="70" editable="true"/>
+            <VBox spacing="12">
+                <ComboBox fx:id="clientBox" promptText="Client" style="-fx-background-radius: 8; -fx-padding: 8;"/>
+                <ComboBox fx:id="serviceBox" promptText="Service" style="-fx-background-radius: 8; -fx-padding: 8;"/>
+                <ComboBox fx:id="employeeBox" promptText="Employee" style="-fx-background-radius: 8; -fx-padding: 8;"/>
+                <DatePicker fx:id="datePicker" style="-fx-background-radius: 8; -fx-padding: 8;"/>
+                <HBox spacing="10">
+                    <Spinner fx:id="hourSpinner" prefWidth="80" style="-fx-background-radius: 8;"/>
+                    <Spinner fx:id="minuteSpinner" prefWidth="80" style="-fx-background-radius: 8;"/>
                 </HBox>
             </VBox>
-
             <Separator/>
-
-            <!-- Кнопки действий -->
             <VBox spacing="10">
-                <Button fx:id="createButton" text="Create Appointment" onAction="#onAdd"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;"
-                        defaultButton="true"/>
-
-                <Button text="Clear Form" onAction="#onClear"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 8;"/>
-
-                <Separator/>
-
-                <Label text="Actions for Selected:" style="-fx-font-weight: bold;"/>
-
-                <Button text="Complete Appointment" onAction="#onComplete"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8;"/>
-
-                <Button text="Cancel Appointment" onAction="#onCancel"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-padding: 8;"/>
+                <Button fx:id="createButton" text="Create Appointment" onAction="#onAdd" maxWidth="Infinity"
+                        style="-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;"/>
             </VBox>
-
-            <Region VBox.vgrow="ALWAYS"/>
-
-            <Label text="* Required fields" style="-fx-font-size: 11px; -fx-text-fill: #6c757d;"/>
-
         </VBox>
     </right>
 
