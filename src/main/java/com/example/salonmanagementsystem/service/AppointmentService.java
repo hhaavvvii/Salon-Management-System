@@ -20,8 +20,6 @@ public class AppointmentService {
      * Получить все записи с учётом роли пользователя
      * ADMIN видит все записи
      * MASTER видит только свои записи
-     *
-     * Этот метод используется в контроллерах
      */
     public List<Appointment> getAllAppointments() {
         List<Appointment> appointments = appointmentDao.findAll();
@@ -39,7 +37,6 @@ public class AppointmentService {
 
     /**
      * Получить записи (псевдоним для getAllAppointments)
-     * Для обратной совместимости со старым кодом
      */
     public List<Appointment> getAppointments() {
         return getAllAppointments();
@@ -63,12 +60,15 @@ public class AppointmentService {
 
     /**
      * Создать новую запись
-     * MASTER не может создавать записи
+     * MASTER может создавать записи только для себя
      */
     public void createAppointment(Appointment appointment) {
-        // Проверка прав: MASTER не может создавать записи
+        // Для мастеров - проверяем что они создают запись только для себя
         if (SessionContext.isMaster()) {
-            throw new AccessDeniedException("Access denied: masters cannot create appointments");
+            Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+            if (!appointment.getEmployeeId().equals(currentEmployeeId)) {
+                throw new AccessDeniedException("Access denied: you can only create appointments for yourself");
+            }
         }
 
         validateAppointment(appointment);
@@ -78,7 +78,6 @@ public class AppointmentService {
 
     /**
      * Создать запись (псевдоним для createAppointment)
-     * Для обратной совместимости
      */
     public void create(Appointment appointment) {
         createAppointment(appointment);
@@ -86,7 +85,7 @@ public class AppointmentService {
 
     /**
      * Обновить запись
-     * MASTER может обновлять только свои записи и только определённые поля
+     * MASTER может обновлять только свои записи
      */
     public void updateAppointment(Appointment appointment) {
         // Проверка прав доступа для MASTER
@@ -95,8 +94,6 @@ public class AppointmentService {
             if (!appointment.getEmployeeId().equals(currentEmployeeId)) {
                 throw new AccessDeniedException("Access denied: cannot modify other employee's appointments");
             }
-            // MASTER не может менять дату, время, услугу
-            // Эта проверка должна быть на уровне UI - просто запрещаем редактирование этих полей
         }
 
         validateAppointment(appointment);
@@ -105,7 +102,7 @@ public class AppointmentService {
 
     /**
      * Обновить статус записи
-     * MASTER может менять статус только своих записей: PLANNED → COMPLETED/CANCELED
+     * MASTER может менять статус только своих записей: PLANNED → COMPLETED/CANCELLED
      */
     public void updateStatus(long appointmentId, AppointmentStatus newStatus) {
         // Для MASTER проверяем, что это его запись
@@ -121,13 +118,13 @@ public class AppointmentService {
                 throw new AccessDeniedException("Access denied: cannot change status of other employee's appointments");
             }
 
-            // MASTER может менять только: PLANNED → COMPLETED или PLANNED → CANCELED
+            // MASTER может менять только: PLANNED → COMPLETED или PLANNED → CANCELLED
             if (appointment.getStatus() != AppointmentStatus.PLANNED) {
                 throw new ValidationException("Can only change status of PLANNED appointments");
             }
 
             if (newStatus != AppointmentStatus.COMPLETED && newStatus != AppointmentStatus.CANCELLED) {
-                throw new ValidationException("Can only change status to COMPLETED or CANCELED");
+                throw new ValidationException("Can only change status to COMPLETED or CANCELLED");
             }
         }
 
@@ -136,7 +133,6 @@ public class AppointmentService {
 
     /**
      * Пометить запись как выполненную
-     * Для обратной совместимости
      */
     public void completeAppointment(long appointmentId) {
         updateStatus(appointmentId, AppointmentStatus.COMPLETED);
@@ -144,7 +140,6 @@ public class AppointmentService {
 
     /**
      * Отменить запись
-     * Для обратной совместимости
      */
     public void cancelAppointment(long appointmentId) {
         updateStatus(appointmentId, AppointmentStatus.CANCELLED);

@@ -48,20 +48,41 @@ public class AppointmentsController {
             hourSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(8, 20, 10));
             minuteSpinner.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 45, 0, 15));
 
+            // Загружаем клиентов и услуги (видят все)
             clientBox.setItems(FXCollections.observableArrayList(clientService.getAllClients()));
             serviceBox.setItems(FXCollections.observableArrayList(serviceService.getAllServices()));
-            employeeBox.setItems(FXCollections.observableArrayList(employeeService.getAllEmployees()));
+
+            // Настройка списка сотрудников в зависимости от роли
+            if (SessionContext.isMaster()) {
+                // Мастер видит только себя в списке сотрудников
+                Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
+                List<Employee> employees = employeeService.getAllEmployees();
+                List<Employee> currentEmployee = employees.stream()
+                        .filter(e -> e.getId().equals(currentEmployeeId))
+                        .toList();
+
+                employeeBox.setItems(FXCollections.observableArrayList(currentEmployee));
+
+                // Автоматически выбираем мастера и блокируем изменение
+                if (!currentEmployee.isEmpty()) {
+                    employeeBox.setValue(currentEmployee.get(0));
+                    employeeBox.setDisable(true);
+                }
+            } else {
+                // Админ видит всех сотрудников
+                employeeBox.setItems(FXCollections.observableArrayList(employeeService.getAllEmployees()));
+            }
+
+            // Фильтр по сотрудникам (для поиска)
             filterEmployeeBox.setItems(FXCollections.observableArrayList(employeeService.getAllEmployees()));
 
+            // Listeners для автообновления календаря
             calendarDatePicker.valueProperty().addListener((obs, oldDate, newDate) -> renderCalendar());
             searchClientField.textProperty().addListener((obs, oldText, newText) -> renderCalendar());
             filterEmployeeBox.valueProperty().addListener((obs, oldEmp, newEmp) -> renderCalendar());
 
             renderCalendar();
 
-            if (SessionContext.isMaster()) {
-                createButton.setDisable(true);
-            }
         } catch (Exception e) {
             e.printStackTrace();
             showError("Failed to initialize Appointments window: " + e.getMessage());
@@ -88,7 +109,6 @@ public class AppointmentsController {
             row.setAlignment(Pos.TOP_LEFT);
             row.setPadding(new Insets(8, 0, 8, 0));
 
-            // Time label
             Label time = new Label(String.format("%02d:00", hour));
             time.setPrefWidth(70);
             time.setStyle(
@@ -98,7 +118,6 @@ public class AppointmentsController {
                             "-fx-padding: 8 0 0 0;"
             );
 
-            // Slot container
             VBox slot = new VBox(10);
             HBox.setHgrow(slot, Priority.ALWAYS);
             slot.setStyle(
@@ -111,14 +130,12 @@ public class AppointmentsController {
             slot.setPadding(new Insets(12));
             slot.setMinHeight(60);
 
-            // Find appointments for this hour
             int finalHour = hour;
             List<Appointment> hourAppointments = appointments.stream()
                     .filter(a -> a.getStartTime().getHour() == finalHour)
                     .toList();
 
             if (hourAppointments.isEmpty()) {
-                // Empty slot indicator
                 Label emptyLabel = new Label("Available");
                 emptyLabel.setStyle(
                         "-fx-text-fill: #9CA3AF; " +
@@ -127,7 +144,6 @@ public class AppointmentsController {
                 );
                 slot.getChildren().add(emptyLabel);
             } else {
-                // Add appointment cards
                 for (Appointment a : hourAppointments) {
                     HBox card = createAppointmentCard(a);
                     slot.getChildren().add(card);
@@ -144,7 +160,6 @@ public class AppointmentsController {
         card.setAlignment(Pos.CENTER_LEFT);
         card.setPadding(new Insets(14));
 
-        // Status color coding
         String cardColor = switch (a.getStatus()) {
             case PLANNED -> "#8B5CF6";
             case COMPLETED -> "#10B981";
@@ -158,44 +173,27 @@ public class AppointmentsController {
                         "-fx-cursor: hand;"
         );
 
-        // Make card clickable
         card.setOnMouseClicked(event -> onAppointmentClick(a));
 
-        // Info section
         VBox info = new VBox(4);
         HBox.setHgrow(info, Priority.ALWAYS);
 
         Label clientName = new Label("👤 " + a.getClientName());
-        clientName.setStyle(
-                "-fx-text-fill: white; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-font-size: 14px;"
-        );
+        clientName.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;");
 
         Label serviceName = new Label("✂️ " + a.getServiceName());
-        serviceName.setStyle(
-                "-fx-text-fill: rgba(255,255,255,0.95); " +
-                        "-fx-font-size: 13px;"
-        );
+        serviceName.setStyle("-fx-text-fill: rgba(255,255,255,0.95); -fx-font-size: 13px;");
 
         Label employeeName = new Label("👨‍💼 " + a.getEmployeeName());
-        employeeName.setStyle(
-                "-fx-text-fill: rgba(255,255,255,0.9); " +
-                        "-fx-font-size: 12px;"
-        );
+        employeeName.setStyle("-fx-text-fill: rgba(255,255,255,0.9); -fx-font-size: 12px;");
 
         info.getChildren().addAll(clientName, serviceName, employeeName);
 
-        // Time and status section
         VBox timeStatus = new VBox(4);
         timeStatus.setAlignment(Pos.TOP_RIGHT);
 
         Label timeLabel = new Label(a.getStartTime().toLocalTime().toString());
-        timeLabel.setStyle(
-                "-fx-text-fill: white; " +
-                        "-fx-font-weight: 600; " +
-                        "-fx-font-size: 13px;"
-        );
+        timeLabel.setStyle("-fx-text-fill: white; -fx-font-weight: 600; -fx-font-size: 13px;");
 
         Label statusBadge = new Label(a.getStatus().name());
         statusBadge.setStyle(
@@ -208,7 +206,6 @@ public class AppointmentsController {
         );
 
         timeStatus.getChildren().addAll(timeLabel, statusBadge);
-
         card.getChildren().addAll(info, timeStatus);
 
         return card;
@@ -221,25 +218,23 @@ public class AppointmentsController {
     }
 
     private void fillFormWithAppointment(Appointment appointment) {
-        // Find and set client
         clientBox.getItems().stream()
                 .filter(c -> c.getId().equals(appointment.getClientId()))
                 .findFirst()
                 .ifPresent(clientBox::setValue);
 
-        // Find and set service
         serviceBox.getItems().stream()
                 .filter(s -> s.getId().equals(appointment.getServiceId()))
                 .findFirst()
                 .ifPresent(serviceBox::setValue);
 
-        // Find and set employee
-        employeeBox.getItems().stream()
-                .filter(e -> e.getId().equals(appointment.getEmployeeId()))
-                .findFirst()
-                .ifPresent(employeeBox::setValue);
+        if (!SessionContext.isMaster()) {
+            employeeBox.getItems().stream()
+                    .filter(e -> e.getId().equals(appointment.getEmployeeId()))
+                    .findFirst()
+                    .ifPresent(employeeBox::setValue);
+        }
 
-        // Set date and time
         datePicker.setValue(appointment.getStartTime().toLocalDate());
         hourSpinner.getValueFactory().setValue(appointment.getStartTime().getHour());
         minuteSpinner.getValueFactory().setValue(appointment.getStartTime().getMinute());
@@ -260,11 +255,6 @@ public class AppointmentsController {
 
     @FXML
     private void onAdd() {
-        if (SessionContext.isMaster()) {
-            showError("Access denied: masters cannot create/edit appointments");
-            return;
-        }
-
         try {
             Service s = serviceBox.getValue();
             Client c = clientBox.getValue();
@@ -280,7 +270,6 @@ public class AppointmentsController {
             LocalDateTime end = start.plusMinutes(s.getDurationMinutes());
 
             if (isEditMode && selectedAppointment != null) {
-                // Edit mode
                 selectedAppointment.setClientId(c.getId());
                 selectedAppointment.setServiceId(s.getId());
                 selectedAppointment.setEmployeeId(e.getId());
@@ -290,7 +279,6 @@ public class AppointmentsController {
                 appointmentService.updateAppointment(selectedAppointment);
                 showSuccess("Appointment updated successfully!");
             } else {
-                // Create mode
                 Appointment a = new Appointment();
                 a.setClientId(c.getId());
                 a.setServiceId(s.getId());
@@ -308,6 +296,8 @@ public class AppointmentsController {
             renderCalendar();
             onClear();
 
+        } catch (ValidationException ex) {
+            showError(ex.getMessage());
         } catch (Exception ex) {
             ex.printStackTrace();
             showError("Failed to save appointment: " + ex.getMessage());
@@ -384,7 +374,9 @@ public class AppointmentsController {
     private void clearForm() {
         clientBox.setValue(null);
         serviceBox.setValue(null);
-        employeeBox.setValue(null);
+        if (!SessionContext.isMaster()) {
+            employeeBox.setValue(null);
+        }
         datePicker.setValue(LocalDate.now());
         hourSpinner.getValueFactory().setValue(10);
         minuteSpinner.getValueFactory().setValue(0);
@@ -444,12 +436,8 @@ public class AppointmentsController {
         alert.setHeaderText(header);
         alert.setContentText(content);
 
-        // Modern alert styling
         DialogPane dialogPane = alert.getDialogPane();
-        dialogPane.setStyle(
-                "-fx-background-color: white; " +
-                        "-fx-font-family: 'Segoe UI', sans-serif;"
-        );
+        dialogPane.setStyle("-fx-background-color: white; -fx-font-family: 'Segoe UI', sans-serif;");
 
         alert.showAndWait();
     }
