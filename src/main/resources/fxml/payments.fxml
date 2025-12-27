@@ -7,126 +7,215 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.PaymentsController"
-            prefHeight="700.0" prefWidth="1400.0">
+            prefHeight="700" prefWidth="1400"
+            style="-fx-background-color: #FAFAFA;">
 
-    <!-- Верхняя панель: Фильтры -->
+    <!-- TOP: Search Panel with Modern Card Design -->
     <top>
-        <VBox spacing="10" style="-fx-background-color: #f8f9fa;">
+        <VBox style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, 0, 2);">
             <padding>
-                <Insets top="15" right="15" bottom="15" left="15"/>
+                <Insets top="24" right="32" bottom="24" left="32"/>
             </padding>
 
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="From Date:"/>
-                <DatePicker fx:id="fromDatePicker" promptText="From" prefWidth="150"/>
+            <!-- Search Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Payments &amp; Transactions" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>                <Region HBox.hgrow="ALWAYS"/>
+            </HBox>
 
-                <Label text="To Date:"/>
-                <DatePicker fx:id="toDatePicker" promptText="To" prefWidth="150"/>
+            <VBox.margin>
+                <Insets bottom="16"/>
+            </VBox.margin>
 
-                <Label text="Method:"/>
-                <ComboBox fx:id="methodFilter" promptText="All methods" prefWidth="120"/>
+            <!-- Search Fields -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <VBox spacing="6" prefWidth="150">
+                    <Label text="From Date" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <DatePicker fx:id="fromDatePicker" promptText="Start date" prefWidth="150" maxWidth="150"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
 
-                <Label text="Status:"/>
-                <ComboBox fx:id="statusFilter" promptText="All statuses" prefWidth="120"/>
+                <VBox spacing="6" prefWidth="150">
+                    <Label text="To Date" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <DatePicker fx:id="toDatePicker" promptText="End date" prefWidth="150" maxWidth="150"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
 
-                <Button text="Search" onAction="#onSearch"
-                        style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 5 15;"/>
-                <Button text="Reset" onAction="#onReset"
-                        style="-fx-padding: 5 15;"/>
+                <VBox spacing="6" prefWidth="150">
+                    <Label text="Method" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <ComboBox fx:id="methodFilter" promptText="All methods" prefWidth="150" maxWidth="150" minWidth="150"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6" prefWidth="120">
+                    <Label text="Status" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <ComboBox fx:id="statusFilter" promptText="All" prefWidth="120" maxWidth="120" minWidth="120"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text=" " style="-fx-font-size: 12px;"/>
+                    <HBox spacing="10">
+                        <Button text="Search" onAction="#onSearch"
+                                style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 24; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 600;">
+                            <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                        </Button>
+                        <Button text="Reset" onAction="#onReset"
+                                style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand;">
+                            <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                        </Button>
+                    </HBox>
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Refund Button -->
+                <VBox spacing="6">
+                    <Label text=" " style="-fx-font-size: 12px;"/>
+                    <Button text="Refund Selected" onAction="#onRefund"
+                            style="-fx-background-color: #EF4444; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 500;">
+                        <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                    </Button>
+                </VBox>
             </HBox>
         </VBox>
     </top>
 
-    <!-- Центр: Таблица с оплатами -->
+    <!-- CENTER: Payments Table -->
     <center>
-        <TableView fx:id="paymentsTable" BorderPane.alignment="CENTER">
-            <columns>
-                <TableColumn fx:id="idCol" text="ID" minWidth="50" prefWidth="50"/>
-                <TableColumn fx:id="dateCol" text="Payment Date" minWidth="110" prefWidth="120"/>
-                <TableColumn fx:id="clientCol" text="Client" minWidth="150" prefWidth="180"/>
-                <TableColumn fx:id="employeeCol" text="Employee" minWidth="150" prefWidth="180"/>
-                <TableColumn fx:id="serviceCol" text="Service" minWidth="150" prefWidth="200"/>
-                <TableColumn fx:id="amountCol" text="Amount (₸)" minWidth="100" prefWidth="120"/>
-                <TableColumn fx:id="methodCol" text="Payment Method" minWidth="120" prefWidth="130"/>
-                <TableColumn fx:id="statusCol" text="Status" minWidth="100" prefWidth="110"/>
-            </columns>
-        </TableView>
-    </center>
-
-    <!-- Правая панель: Форма создания оплаты -->
-    <right>
-        <VBox spacing="15" prefWidth="350" style="-fx-background-color: #f5f5f5;">
+        <VBox spacing="0">
             <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
+                <Insets top="24" right="24" bottom="24" left="24"/>
             </padding>
 
-            <Label text="Create Payment"
-                   style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+            <!-- Table Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Payments List" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <VBox.margin>
+                    <Insets bottom="12"/>
+                </VBox.margin>
+            </HBox>
 
-            <Separator/>
+            <!-- Table View -->
+            <TableView fx:id="paymentsTable" VBox.vgrow="ALWAYS"
+                       style="-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #E5E7EB; -fx-border-radius: 12; -fx-border-width: 1;">
+                <columns>
+                    <TableColumn fx:id="idCol" text="ID" minWidth="60" prefWidth="60"
+                                 style="-fx-alignment: CENTER;"/>
+                    <TableColumn fx:id="dateCol" text="Date" minWidth="120" prefWidth="120"/>
+                    <TableColumn fx:id="clientCol" text="Client" minWidth="180" prefWidth="200"/>
+                    <TableColumn fx:id="employeeCol" text="Employee" minWidth="180" prefWidth="200"/>
+                    <TableColumn fx:id="serviceCol" text="Service" minWidth="180" prefWidth="220"/>
+                    <TableColumn fx:id="amountCol" text="Amount (₸)" minWidth="120" prefWidth="130"
+                                 style="-fx-alignment: CENTER-RIGHT;"/>
+                    <TableColumn fx:id="methodCol" text="Method" minWidth="120" prefWidth="130"/>
+                    <TableColumn fx:id="statusCol" text="Status" minWidth="100" prefWidth="110"
+                                 style="-fx-alignment: CENTER;"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
 
-            <!-- Форма -->
-            <VBox spacing="5">
-                <Label text="Appointment:*"/>
-                <ComboBox fx:id="appointmentBox" promptText="Select completed appointment" maxWidth="Infinity"/>
+    <!-- RIGHT: Create Payment Form Panel -->
+    <right>
+        <VBox spacing="0" prefWidth="380"
+              style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, -2, 0);">
+
+            <padding>
+                <Insets top="32" right="32" bottom="32" left="32"/>
+            </padding>
+
+            <!-- Form Header -->
+            <VBox spacing="8">
+                <Label text="Create Payment"
+                       style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <Label text="Record payment for completed appointment"
+                       style="-fx-font-size: 13px; -fx-text-fill: #6B7280;"/>
+                <VBox.margin>
+                    <Insets bottom="24"/>
+                </VBox.margin>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Client:"/>
-                <TextField fx:id="clientField" editable="false" promptText="Auto-filled"/>
+            <!-- Separator Line -->
+            <Separator style="-fx-background-color: #F3F4F6; -fx-padding: 0;">
+                <VBox.margin>
+                    <Insets bottom="24"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Form Fields -->
+            <VBox spacing="20" VBox.vgrow="ALWAYS">
+
+                <!-- Appointment -->
+                <VBox spacing="6">
+                    <Label text="Appointment *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="appointmentBox" promptText="Select completed appointment" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Client (auto-filled) -->
+                <VBox spacing="6">
+                    <Label text="Client" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <TextField fx:id="clientField" editable="false" promptText="Auto-filled from appointment"
+                               style="-fx-background-color: #F3F4F6; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 12 14; -fx-font-size: 13px; -fx-text-fill: #6B7280;"/>
+                </VBox>
+
+                <!-- Service (auto-filled) -->
+                <VBox spacing="6">
+                    <Label text="Service" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <TextField fx:id="serviceField" editable="false" promptText="Auto-filled from appointment"
+                               style="-fx-background-color: #F3F4F6; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 12 14; -fx-font-size: 13px; -fx-text-fill: #6B7280;"/>
+                </VBox>
+
+                <!-- Amount (auto-filled) -->
+                <VBox spacing="6">
+                    <Label text="Amount (₸)" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <TextField fx:id="amountField" editable="false" promptText="Auto-filled from service"
+                               style="-fx-background-color: #F3F4F6; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 12 14; -fx-font-size: 13px; -fx-text-fill: #6B7280; -fx-font-weight: 600;"/>
+                </VBox>
+
+                <!-- Payment Method -->
+                <VBox spacing="6">
+                    <Label text="Payment Method *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="methodBox" promptText="Select payment method" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Payment Date -->
+                <VBox spacing="6">
+                    <Label text="Payment Date *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <DatePicker fx:id="paymentDatePicker" maxWidth="Infinity"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Comment -->
+                <VBox spacing="6" VBox.vgrow="ALWAYS">
+                    <Label text="Comment" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <TextArea fx:id="commentField" promptText="Optional notes..."
+                              wrapText="true" prefRowCount="3"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 12 14; -fx-font-size: 13px; -fx-prompt-text-fill: #9CA3AF;"/>
+                </VBox>
+
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Service:"/>
-                <TextField fx:id="serviceField" editable="false" promptText="Auto-filled"/>
+            <!-- Separator Line -->
+            <Separator style="-fx-background-color: #F3F4F6; -fx-padding: 0;">
+                <VBox.margin>
+                    <Insets top="24" bottom="20"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Action Buttons -->
+            <VBox spacing="12">
+                <Button text="Create Payment" onAction="#onCreate" maxWidth="Infinity"
+                        style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 14 24; -fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
+
+                <Button text="Clear Form" onAction="#onClear" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 12 24; -fx-font-size: 13px; -fx-cursor: hand;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
             </VBox>
-
-            <VBox spacing="5">
-                <Label text="Amount (₸):"/>
-                <TextField fx:id="amountField" editable="false" promptText="Auto-filled"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Payment Method:*"/>
-                <ComboBox fx:id="methodBox" promptText="Select method" maxWidth="Infinity"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Payment Date:"/>
-                <DatePicker fx:id="paymentDatePicker" maxWidth="Infinity"/>
-            </VBox>
-
-            <VBox spacing="5">
-                <Label text="Comment:"/>
-                <TextArea fx:id="commentField" promptText="Optional comment..."
-                          prefRowCount="2" wrapText="true"/>
-            </VBox>
-
-            <Separator/>
-
-            <!-- Кнопки -->
-            <VBox spacing="10">
-                <Button text="Create Payment" onAction="#onCreate"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;"
-                        defaultButton="true"/>
-
-                <Button text="Clear Form" onAction="#onClear"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 8;"/>
-
-                <Separator/>
-
-                <Label text="Action for Selected:" style="-fx-font-weight: bold;"/>
-
-                <Button text="Refund Payment" onAction="#onRefund"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-padding: 8;"/>
-            </VBox>
-
-            <Region VBox.vgrow="ALWAYS"/>
-
-            <Label text="* Required fields" style="-fx-font-size: 11px; -fx-text-fill: #6c757d;"/>
 
         </VBox>
     </right>

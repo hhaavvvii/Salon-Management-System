@@ -7,125 +7,165 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.ReportsController"
-            prefHeight="700.0" prefWidth="1400.0">
+            prefHeight="700" prefWidth="1400"
+            style="-fx-background-color: #FAFAFA;"
+            stylesheets="@../styles/Reports.css">
 
-    <!-- Верхняя панель: Общие фильтры -->
+    <!-- TOP: Compact Filters and Controls -->
     <top>
-        <VBox spacing="10" style="-fx-background-color: #f8f9fa;">
+        <VBox style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, 0, 2);">
             <padding>
-                <Insets top="15" right="15" bottom="15" left="15"/>
+                <Insets top="20" right="32" bottom="20" left="32"/>
             </padding>
 
-            <!-- Заголовок -->
-            <HBox alignment="CENTER_LEFT">
-                <Label text="Reports &amp; Analytics"
-                       style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-            </HBox>
+            <!-- Controls Row -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <!-- From Date -->
+                <VBox spacing="4">
+                    <Label text="From" style="-fx-font-size: 11px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <DatePicker fx:id="fromDatePicker" promptText="Start date" prefWidth="160"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
 
-            <!-- Фильтры периода -->
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="Period:"/>
-                <DatePicker fx:id="fromDatePicker" promptText="From" prefWidth="150"/>
-                <Label text="to"/>
-                <DatePicker fx:id="toDatePicker" promptText="To" prefWidth="150"/>
+                <!-- To Date -->
+                <VBox spacing="4">
+                    <Label text="To" style="-fx-font-size: 11px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <DatePicker fx:id="toDatePicker" promptText="End date" prefWidth="160"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
 
-                <Button text="Generate Report" onAction="#onGenerate"
-                        style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-padding: 8 20; -fx-font-weight: bold;"/>
-                <Button text="Export CSV" onAction="#onExport"
-                        style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-padding: 8 20;"/>
-                <Button text="Reset" onAction="#onReset"
-                        style="-fx-padding: 8 15;"/>
+                <!-- Spacer -->
+                <Region prefWidth="20"/>
+
+                <!-- Action Buttons -->
+                <Button text="Generate Report" onAction="#onGenerate" prefWidth="160"
+                        style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 600;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
+
+                <Button text="Export CSV" onAction="#onExport" prefWidth="130"
+                        style="-fx-background-color: #10B981; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 500;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
+
+                <Button text="Reset" onAction="#onReset" prefWidth="100"
+                        style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <!-- Общая выручка -->
-                <VBox alignment="CENTER_RIGHT">
-                    <Label text="Total Revenue:" style="-fx-font-size: 12px; -fx-text-fill: #6c757d;"/>
+                <!-- Total Revenue Display -->
+                <VBox spacing="4" alignment="CENTER_RIGHT"
+                      style="-fx-background-color: #EDE9FE; -fx-background-radius: 8; -fx-padding: 10 20;">
+                    <Label text="Total Revenue" style="-fx-font-size: 11px; -fx-text-fill: #7C3AED; -fx-font-weight: 600;"/>
                     <Label fx:id="totalRevenueLabel" text="0.00 ₸"
-                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #28a745;"/>
+                           style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #6366F1;"/>
                 </VBox>
             </HBox>
         </VBox>
     </top>
 
-    <!-- Центр: Вкладки с отчетами -->
+    <!-- CENTER: Report Tabs -->
     <center>
-        <TabPane fx:id="reportsTabPane" tabClosingPolicy="UNAVAILABLE">
+        <VBox spacing="0">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
 
-            <!-- Вкладка: Выручка -->
-            <Tab text="Revenue">
-                <BorderPane>
-                    <!-- Дополнительные фильтры для выручки -->
-                    <top>
-                        <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: #ffffff; -fx-padding: 10;">
-                            <Label text="Filter by:"/>
-                            <ComboBox fx:id="employeeFilterBox" promptText="All employees" prefWidth="180"/>
-                            <ComboBox fx:id="serviceFilterBox" promptText="All services" prefWidth="180"/>
-                            <Button text="Apply" onAction="#onApplyRevenueFilters"
-                                    style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-padding: 5 15;"/>
-                        </HBox>
-                    </top>
+            <!-- Tabs -->
+            <TabPane fx:id="reportsTabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS"
+                     style="-fx-background-color: #EDE9FE; -fx-background-radius: 12; -fx-border-color: #E5E7EB; -fx-border-radius: 12; -fx-border-width: 1;">
 
-                    <center>
-                        <TableView fx:id="revenueTable">
-                            <columns>
-                                <TableColumn fx:id="revDateCol" text="Date" minWidth="100" prefWidth="120"/>
-                                <TableColumn fx:id="revEmployeeCol" text="Employee" minWidth="150" prefWidth="200"/>
-                                <TableColumn fx:id="revServiceCol" text="Service" minWidth="150" prefWidth="250"/>
-                                <TableColumn fx:id="revCountCol" text="Count" minWidth="80" prefWidth="100"/>
-                                <TableColumn fx:id="revTotalCol" text="Total Revenue (₸)" minWidth="120" prefWidth="150"/>
-                            </columns>
-                        </TableView>
-                    </center>
-                </BorderPane>
-            </Tab>
+                <!-- Tab 1: Revenue Report -->
+                <Tab text="💰 Revenue">
+                    <BorderPane style="-fx-background-color: white;">
+                        <!-- Revenue Filters -->
+                        <top>
+                            <HBox spacing="12" alignment="CENTER_LEFT"
+                                  style="-fx-background-color: #F9FAFB; -fx-padding: 12; -fx-border-color: #E5E7EB; -fx-border-width: 0 0 1 0;">
+                                <Label text="Filter:" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 600;"/>
 
-            <!-- Вкладка: Загрузка сотрудников -->
-            <Tab text="Employee Load">
-                <TableView fx:id="employeeLoadTable">
-                    <columns>
-                        <TableColumn fx:id="empNameCol" text="Employee" minWidth="200" prefWidth="300"/>
-                        <TableColumn fx:id="empAppointmentsCol" text="Appointments" minWidth="120" prefWidth="150"/>
-                        <TableColumn fx:id="empWorkTimeCol" text="Work Time" minWidth="120" prefWidth="150"/>
-                        <TableColumn fx:id="empRevenueCol" text="Revenue (₸)" minWidth="120" prefWidth="150"/>
-                        <TableColumn fx:id="empLoadCol" text="Load %" minWidth="100" prefWidth="120"/>
-                    </columns>
-                </TableView>
-            </Tab>
+                                <ComboBox fx:id="employeeFilterBox" promptText="All employees" prefWidth="180"
+                                          style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 6 10; -fx-font-size: 13px;"/>
 
-            <!-- Вкладка: Активность клиентов -->
-            <Tab text="Client Activity">
-                <TableView fx:id="clientActivityTable">
-                    <columns>
-                        <TableColumn fx:id="clientNameCol" text="Client Name" minWidth="200" prefWidth="300"/>
-                        <TableColumn fx:id="clientPhoneCol" text="Phone" minWidth="120" prefWidth="150"/>
-                        <TableColumn fx:id="clientVisitsCol" text="Total Visits" minWidth="100" prefWidth="120"/>
-                        <TableColumn fx:id="clientSpentCol" text="Total Spent (₸)" minWidth="120" prefWidth="150"/>
-                        <TableColumn fx:id="clientLastVisitCol" text="Last Visit" minWidth="100" prefWidth="120"/>
-                    </columns>
-                </TableView>
-            </Tab>
+                                <ComboBox fx:id="serviceFilterBox" promptText="All services" prefWidth="180"
+                                          style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 6 10; -fx-font-size: 13px;"/>
 
-            <!-- Вкладка: Статистика по услугам -->
-            <Tab text="Services">
-                <TableView fx:id="servicesTable">
-                    <columns>
-                        <TableColumn fx:id="svcNameCol" text="Service Name" minWidth="250" prefWidth="400"/>
-                        <TableColumn fx:id="svcBookedCol" text="Times Booked" minWidth="120" prefWidth="150"/>
-                        <TableColumn fx:id="svcRevenueCol" text="Total Revenue (₸)" minWidth="120" prefWidth="180"/>
-                        <TableColumn fx:id="svcAvgPriceCol" text="Avg Price (₸)" minWidth="120" prefWidth="150"/>
-                    </columns>
-                </TableView>
-            </Tab>
+                                <Button text="Apply" onAction="#onApplyRevenueFilters"
+                                        style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 6 16; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 500;">
+                                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                                </Button>
+                            </HBox>
+                        </top>
 
-        </TabPane>
+                        <center>
+                            <TableView fx:id="revenueTable" VBox.vgrow="ALWAYS"
+                                       style="-fx-background-color: white; -fx-border-width: 0;">
+                                <columns>
+                                    <TableColumn fx:id="revDateCol" text="Date" minWidth="120" prefWidth="120"/>
+                                    <TableColumn fx:id="revEmployeeCol" text="Employee" minWidth="200" prefWidth="240"/>
+                                    <TableColumn fx:id="revServiceCol" text="Service" minWidth="200" prefWidth="300"/>
+                                    <TableColumn fx:id="revCountCol" text="Count" minWidth="100" prefWidth="120"/>
+                                    <TableColumn fx:id="revTotalCol" text="Revenue (₸)" minWidth="150" prefWidth="180"/>
+                                </columns>
+                            </TableView>
+                        </center>
+                    </BorderPane>
+                </Tab>
+
+                <!-- Tab 2: Employee Load -->
+                <Tab text="👥 Employee Load">
+                    <TableView fx:id="employeeLoadTable" VBox.vgrow="ALWAYS"
+                               style="-fx-background-color: white; -fx-border-width: 0;">
+                        <columns>
+                            <TableColumn fx:id="empNameCol" text="Employee" minWidth="250" prefWidth="340"/>
+                            <TableColumn fx:id="empAppointmentsCol" text="Appointments" minWidth="150" prefWidth="180"/>
+                            <TableColumn fx:id="empWorkTimeCol" text="Work Time" minWidth="150" prefWidth="180"/>
+                            <TableColumn fx:id="empRevenueCol" text="Revenue (₸)" minWidth="150" prefWidth="200"/>
+                            <TableColumn fx:id="empLoadCol" text="Load %" minWidth="120" prefWidth="150"/>
+                        </columns>
+                    </TableView>
+                </Tab>
+
+                <!-- Tab 3: Client Activity -->
+                <Tab text="👤 Client Activity">
+                    <TableView fx:id="clientActivityTable" VBox.vgrow="ALWAYS"
+                               style="-fx-background-color: white; -fx-border-width: 0;">
+                        <columns>
+                            <TableColumn fx:id="clientNameCol" text="Client Name" minWidth="250" prefWidth="340"/>
+                            <TableColumn fx:id="clientPhoneCol" text="Phone" minWidth="150" prefWidth="180"/>
+                            <TableColumn fx:id="clientVisitsCol" text="Visits" minWidth="120" prefWidth="150"/>
+                            <TableColumn fx:id="clientSpentCol" text="Total Spent (₸)" minWidth="150" prefWidth="200"/>
+                            <TableColumn fx:id="clientLastVisitCol" text="Last Visit" minWidth="130" prefWidth="160"/>
+                        </columns>
+                    </TableView>
+                </Tab>
+
+                <!-- Tab 4: Services Statistics -->
+                <Tab text="✂️ Services">
+                    <TableView fx:id="servicesTable" VBox.vgrow="ALWAYS"
+                               style="-fx-background-color: white; -fx-border-width: 0;">
+                        <columns>
+                            <TableColumn fx:id="svcNameCol" text="Service Name" minWidth="300" prefWidth="480"/>
+                            <TableColumn fx:id="svcBookedCol" text="Times Booked" minWidth="150" prefWidth="200"/>
+                            <TableColumn fx:id="svcRevenueCol" text="Revenue (₸)" minWidth="150" prefWidth="220"/>
+                            <TableColumn fx:id="svcAvgPriceCol" text="Avg Price (₸)" minWidth="150" prefWidth="200"/>
+                        </columns>
+                    </TableView>
+                </Tab>
+
+            </TabPane>
+        </VBox>
     </center>
 
-    <!-- Нижняя панель: Информация -->
+    <!-- BOTTOM: Compact Status Bar -->
     <bottom>
-        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #f8f9fa; -fx-padding: 10;">
-            <Label fx:id="statusLabel" text="Select a period and click 'Generate Report'"
-                   style="-fx-font-size: 12px; -fx-text-fill: #6c757d;"/>
+        <HBox alignment="CENTER_LEFT" spacing="10"
+              style="-fx-background-color: #F9FAFB; -fx-padding: 10 24; -fx-border-color: #E5E7EB; -fx-border-width: 1 0 0 0;">
+            <Label text="📊" style="-fx-font-size: 13px;"/>
+            <Label fx:id="statusLabel" text="Select a period and click 'Generate'"
+                   style="-fx-font-size: 12px; -fx-text-fill: #6B7280;"/>
         </HBox>
     </bottom>
 

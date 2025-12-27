@@ -8,60 +8,204 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.AppointmentsController"
             prefHeight="700" prefWidth="1400"
-            style="-fx-background-color: #f3eefc;">
+            style="-fx-background-color: #FAFAFA;">
 
-    <!-- TOP: Filters -->
+    <!-- TOP: Search Panel with Modern Card Design -->
     <top>
-        <HBox spacing="12" alignment="CENTER"
-              style="-fx-background-color: #f8f6fc;">
+        <VBox style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, 0, 2);">
             <padding>
-                <Insets top="12" right="24" bottom="12" left="24"/>
+                <Insets top="24" right="32" bottom="24" left="32"/>
             </padding>
 
-            <DatePicker fx:id="calendarDatePicker" prefWidth="150"/>
-            <TextField fx:id="searchClientField" promptText="Search by client" prefWidth="180"/>
-            <ComboBox fx:id="filterEmployeeBox" promptText="All masters" prefWidth="160"/>
+            <!-- Search Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Appointments Calendar" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+            </HBox>
 
-            <Button text="Search" onAction="#onSearch"
-                    style="-fx-background-color: #6f42c1; -fx-text-fill: white;"/>
-            <Button text="Reset" onAction="#onReset"
-                    style="-fx-background-color: #e0d6f5; -fx-text-fill: #6f42c1;"/>
-            <Region HBox.hgrow="ALWAYS"/>
-        </HBox>
+            <VBox.margin>
+                <Insets bottom="16"/>
+            </VBox.margin>
+
+            <!-- Search Fields -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <VBox spacing="6" prefWidth="180">
+                    <Label text="Date" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <DatePicker fx:id="calendarDatePicker" prefWidth="180" maxWidth="180"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="Client Name" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <TextField fx:id="searchClientField" promptText="Search by client name"
+                               style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px; -fx-prompt-text-fill: #9CA3AF;"/>
+                </VBox>
+
+                <VBox spacing="6" prefWidth="200">
+                    <Label text="Employee" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <ComboBox fx:id="filterEmployeeBox" promptText="All employees" prefWidth="200" maxWidth="200" minWidth="200"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text=" " style="-fx-font-size: 12px;"/>
+                    <HBox spacing="10">
+                        <Button text="Search" onAction="#onSearch"
+                                style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 24; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 600;">
+                            <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                        </Button>
+                        <Button text="Reset" onAction="#onReset"
+                                style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand;">
+                            <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                        </Button>
+                    </HBox>
+                </VBox>
+            </HBox>
+        </VBox>
     </top>
 
-    <!-- CENTER: Calendar -->
+    <!-- CENTER: Calendar View -->
     <center>
-        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
-            <VBox fx:id="calendarContainer" spacing="12">
-                <padding>
-                    <Insets top="15" right="15" bottom="15" left="15"/>
-                </padding>
-            </VBox>
-        </ScrollPane>
+        <VBox spacing="0">
+            <padding>
+                <Insets top="24" right="24" bottom="24" left="24"/>
+            </padding>
+
+            <!-- Calendar Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Daily Schedule" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <Label text="(Click on appointment to edit)" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-style: italic;"/>
+                <VBox.margin>
+                    <Insets bottom="12"/>
+                </VBox.margin>
+            </HBox>
+
+            <!-- Calendar Container with ScrollPane -->
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                        style="-fx-background-color: transparent; -fx-background: transparent;">
+                <VBox fx:id="calendarContainer" spacing="8">
+                    <padding>
+                        <Insets top="0" right="0" bottom="0" left="0"/>
+                    </padding>
+                </VBox>
+            </ScrollPane>
+        </VBox>
     </center>
 
-    <!-- RIGHT: Form -->
+    <!-- RIGHT: Create/Edit Appointment Form Panel -->
     <right>
-        <VBox spacing="16" prefWidth="300" style="-fx-background-color: #f4f2fa; -fx-padding: 20;">
-            <Label text="Create Appointment"
-                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #6f42c1;"/>
-            <Separator/>
-            <VBox spacing="12">
-                <ComboBox fx:id="clientBox" promptText="Client" style="-fx-background-radius: 8; -fx-padding: 8;"/>
-                <ComboBox fx:id="serviceBox" promptText="Service" style="-fx-background-radius: 8; -fx-padding: 8;"/>
-                <ComboBox fx:id="employeeBox" promptText="Employee" style="-fx-background-radius: 8; -fx-padding: 8;"/>
-                <DatePicker fx:id="datePicker" style="-fx-background-radius: 8; -fx-padding: 8;"/>
-                <HBox spacing="10">
-                    <Spinner fx:id="hourSpinner" prefWidth="80" style="-fx-background-radius: 8;"/>
-                    <Spinner fx:id="minuteSpinner" prefWidth="80" style="-fx-background-radius: 8;"/>
-                </HBox>
+        <VBox spacing="0" prefWidth="360"
+              style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, -2, 0);">
+
+            <padding>
+                <Insets top="32" right="32" bottom="32" left="32"/>
+            </padding>
+
+            <!-- Form Header -->
+            <VBox spacing="8">
+                <Label fx:id="formTitle" text="Create Appointment"
+                       style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <Label text="Fill in the appointment details"
+                       style="-fx-font-size: 13px; -fx-text-fill: #6B7280;"/>
+                <VBox.margin>
+                    <Insets bottom="24"/>
+                </VBox.margin>
             </VBox>
-            <Separator/>
+
+            <!-- Separator Line -->
+            <Separator style="-fx-background-color: #F3F4F6; -fx-padding: 0;">
+                <VBox.margin>
+                    <Insets bottom="24"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Form Fields -->
+            <VBox spacing="20" VBox.vgrow="ALWAYS">
+
+                <!-- Client -->
+                <VBox spacing="6">
+                    <Label text="Client *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="clientBox" promptText="Select client" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Service -->
+                <VBox spacing="6">
+                    <Label text="Service *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="serviceBox" promptText="Select service" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Employee -->
+                <VBox spacing="6">
+                    <Label text="Employee *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="employeeBox" promptText="Select employee" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Date -->
+                <VBox spacing="6">
+                    <Label text="Date *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <DatePicker fx:id="datePicker" maxWidth="Infinity"
+                                style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Time -->
+                <VBox spacing="6">
+                    <Label text="Time *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <HBox spacing="10">
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Hour" style="-fx-font-size: 11px; -fx-text-fill: #6B7280;"/>
+                            <Spinner fx:id="hourSpinner" maxWidth="Infinity"
+                                     style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1;"/>
+                        </VBox>
+                        <VBox spacing="4" HBox.hgrow="ALWAYS">
+                            <Label text="Minute" style="-fx-font-size: 11px; -fx-text-fill: #6B7280;"/>
+                            <Spinner fx:id="minuteSpinner" maxWidth="Infinity"
+                                     style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1;"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+            </VBox>
+
+            <!-- Separator Line -->
+            <Separator style="-fx-background-color: #F3F4F6; -fx-padding: 0;">
+                <VBox.margin>
+                    <Insets top="24" bottom="20"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Action Buttons -->
             <VBox spacing="10">
+                <!-- Create/Update Button -->
                 <Button fx:id="createButton" text="Create Appointment" onAction="#onAdd" maxWidth="Infinity"
-                        style="-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;"/>
+                        style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 14 24; -fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
+
+                <!-- Action Buttons Row -->
+                <HBox spacing="10">
+                    <!-- Complete Button -->
+                    <Button text="Complete" onAction="#onComplete" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                            style="-fx-background-color: #10B981; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 12 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 500;">
+                        <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                    </Button>
+
+                    <!-- Cancel Button -->
+                    <Button text="Cancel" onAction="#onCancel" maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                            style="-fx-background-color: #EF4444; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 12 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 500;">
+                        <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                    </Button>
+                </HBox>
+
+                <!-- Clear Button -->
+                <Button text="Clear Form" onAction="#onClear" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 12 24; -fx-font-size: 13px; -fx-cursor: hand;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
             </VBox>
+
         </VBox>
     </right>
 

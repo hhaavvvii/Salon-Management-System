@@ -1,0 +1,47 @@
+/* Reports Tab Styling */
+
+/* Tab header area background - ФИОЛЕТОВЫЙ вместо черного */
+.tab-pane > .tab-header-area {
+    -fx-background-color: #EDE9FE;
+}
+
+.tab-pane > .tab-header-area > .headers-region {
+    -fx-background-color: #EDE9FE;
+}
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: #EDE9FE;
+}
+
+/* Individual tabs */
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8 8 0 0;
+    -fx-padding: 10 20;
+}
+
+/* Selected tab */
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: white;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1 1 0 1;
+}
+
+/* Tab label text */
+.tab-pane > .tab-header-area > .headers-region > .tab > .tab-container > .tab-label {
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+}
+
+/* Selected tab label */
+.tab-pane > .tab-header-area > .headers-region > .tab:selected > .tab-container > .tab-label {
+    -fx-text-fill: #2D2D2D;
+    -fx-font-weight: 600;
+}
+
+/* Tab content area */
+.tab-pane > .tab-content-area {
+    -fx-background-color: white;
+    -fx-background-radius: 0 0 12 12;
+}

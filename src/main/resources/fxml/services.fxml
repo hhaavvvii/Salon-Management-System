@@ -7,70 +7,180 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.example.salonmanagementsystem.controllers.ServicesController"
-            prefHeight="700" prefWidth="1000">
+            prefHeight="700" prefWidth="1100"
+            style="-fx-background-color: #FAFAFA;">
 
-    <!-- TOP: Filters -->
+    <!-- TOP: Search Panel with Modern Card Design -->
     <top>
-        <HBox spacing="12" alignment="CENTER" style="-fx-background-color: #f8f6fc;">
+        <VBox style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, 0, 2);">
             <padding>
-                <Insets top="12" right="24" bottom="12" left="24"/>
+                <Insets top="24" right="32" bottom="24" left="32"/>
             </padding>
 
-            <TextField fx:id="searchNameField" promptText="Search by name" prefWidth="180"/>
-            <ComboBox fx:id="categoryFilter" promptText="Category" prefWidth="150"/>
-            <ComboBox fx:id="statusFilter" promptText="Status" prefWidth="120"/>
+            <!-- Search Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Search Services" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <Region HBox.hgrow="ALWAYS"/>
 
-            <Button text="Search" onAction="#onSearch"
-                    style="-fx-background-color: #6f42c1; -fx-text-fill: white;"/>
-            <Button text="Reset" onAction="#onReset"
-                    style="-fx-background-color: #6f42c1; -fx-text-fill: white;"/>
+                <!-- Action Buttons Group -->
+                <HBox spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Edit" onAction="#onEdit"
+                            style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 500;">
+                        <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                    </Button>
+                </HBox>
+            </HBox>
 
-            <Region HBox.hgrow="ALWAYS"/>
-        </HBox>
+            <VBox.margin>
+                <Insets bottom="16"/>
+            </VBox.margin>
+
+            <!-- Search Fields -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="Service Name" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <TextField fx:id="searchNameField" promptText="Enter service name"
+                               style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px; -fx-prompt-text-fill: #9CA3AF;"/>
+                </VBox>
+
+                <VBox spacing="6" prefWidth="180">
+                    <Label text="Category" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <ComboBox fx:id="categoryFilter" promptText="All categories" prefWidth="180" maxWidth="180" minWidth="180"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6" prefWidth="120">
+                    <Label text="Status" style="-fx-font-size: 12px; -fx-text-fill: #6B7280; -fx-font-weight: 500;"/>
+                    <ComboBox fx:id="statusFilter" promptText="All" prefWidth="120" maxWidth="120" minWidth="120"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <VBox spacing="6">
+                    <Label text=" " style="-fx-font-size: 12px;"/>
+                    <HBox spacing="10">
+                        <Button text="Search" onAction="#onSearch"
+                                style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 24; -fx-font-size: 13px; -fx-cursor: hand; -fx-font-weight: 600;">
+                            <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                        </Button>
+                        <Button text="Reset" onAction="#onReset"
+                                style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 10 20; -fx-font-size: 13px; -fx-cursor: hand;">
+                            <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                        </Button>
+                    </HBox>
+                </VBox>
+            </HBox>
+        </VBox>
     </top>
 
-    <!-- CENTER: Services List -->
+    <!-- CENTER: Services List with Modern Cards -->
     <center>
-        <VBox spacing="10">
+        <VBox spacing="0">
             <padding>
-                <Insets top="15" right="15" bottom="15" left="15"/>
+                <Insets top="24" right="24" bottom="24" left="24"/>
             </padding>
-            <ListView fx:id="servicesListView" VBox.vgrow="ALWAYS"/>
+
+            <!-- List Header -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Services List" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <VBox.margin>
+                    <Insets bottom="12"/>
+                </VBox.margin>
+            </HBox>
+
+            <!-- List View -->
+            <ListView fx:id="servicesListView" VBox.vgrow="ALWAYS"
+                      style="-fx-background-color: transparent; -fx-background-insets: 0; -fx-padding: 0; -fx-border-width: 0;"/>
         </VBox>
     </center>
 
-    <!-- RIGHT: Form -->
+    <!-- RIGHT: Add/Edit Form Panel -->
     <right>
-        <VBox spacing="16" prefWidth="300"
-              style="-fx-background-color: #f4f2fa; -fx-padding: 20;">
+        <VBox spacing="0" prefWidth="360"
+              style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(111,66,193,0.08), 12, 0, -2, 0);">
 
-            <Label fx:id="formTitle"
-                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #6f42c1;"/>
+            <padding>
+                <Insets top="32" right="32" bottom="32" left="32"/>
+            </padding>
 
-            <Separator/>
+            <!-- Form Header -->
+            <VBox spacing="8">
+                <Label fx:id="formTitle" text="Add New Service"
+                       style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2D2D2D;"/>
+                <Label text="Fill in the service information below"
+                       style="-fx-font-size: 13px; -fx-text-fill: #6B7280;"/>
+                <VBox.margin>
+                    <Insets bottom="24"/>
+                </VBox.margin>
+            </VBox>
 
+            <!-- Separator Line -->
+            <Separator style="-fx-background-color: #F3F4F6; -fx-padding: 0;">
+                <VBox.margin>
+                    <Insets bottom="24"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Form Fields -->
+            <VBox spacing="20" VBox.vgrow="ALWAYS">
+
+                <!-- Service Name -->
+                <VBox spacing="6">
+                    <Label text="Service Name *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <TextField fx:id="nameField" promptText="Enter service name"
+                               style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 12 14; -fx-font-size: 13px; -fx-prompt-text-fill: #9CA3AF;"/>
+                </VBox>
+
+                <!-- Category -->
+                <VBox spacing="6">
+                    <Label text="Category *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="categoryBox" promptText="Select category" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+                <!-- Price -->
+                <VBox spacing="6">
+                    <Label text="Price (₸) *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <TextField fx:id="priceField" promptText="0.00"
+                               style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 12 14; -fx-font-size: 13px; -fx-prompt-text-fill: #9CA3AF;"/>
+                </VBox>
+
+                <!-- Duration -->
+                <VBox spacing="6">
+                    <Label text="Duration (minutes) *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <Spinner fx:id="durationSpinner" maxWidth="Infinity"
+                             style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1;"/>
+                </VBox>
+
+                <!-- Status -->
+                <VBox spacing="6">
+                    <Label text="Status *" style="-fx-font-size: 12px; -fx-text-fill: #374151; -fx-font-weight: 600;"/>
+                    <ComboBox fx:id="statusBox" promptText="Select status" maxWidth="Infinity"
+                              style="-fx-background-color: #F9FAFB; -fx-background-radius: 8; -fx-border-color: #E5E7EB; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 10 14; -fx-font-size: 13px;"/>
+                </VBox>
+
+            </VBox>
+
+            <!-- Separator Line -->
+            <Separator style="-fx-background-color: #F3F4F6; -fx-padding: 0;">
+                <VBox.margin>
+                    <Insets top="24" bottom="20"/>
+                </VBox.margin>
+            </Separator>
+
+            <!-- Action Buttons -->
             <VBox spacing="12">
-                <TextField fx:id="nameField" promptText="Service Name"
-                           style="-fx-background-radius: 8; -fx-padding: 8;"/>
-                <ComboBox fx:id="categoryBox" promptText="Category"
-                          style="-fx-background-radius: 8;"/>
-                <TextField fx:id="priceField" promptText="Price"
-                           style="-fx-background-radius: 8; -fx-padding: 8;"/>
-                <Spinner fx:id="durationSpinner" prefWidth="Infinity"/>
-                <ComboBox fx:id="statusBox" promptText="Status"
-                          style="-fx-background-radius: 8;"/>
+                <Button fx:id="saveButton" text="Save Service" onAction="#onSave" maxWidth="Infinity"
+                        style="-fx-background-color: #8B5CF6; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 14 24; -fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
+
+                <Button text="Clear Form" onAction="#onClear" maxWidth="Infinity"
+                        style="-fx-background-color: transparent; -fx-text-fill: #6B7280; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1; -fx-padding: 12 24; -fx-font-size: 13px; -fx-cursor: hand;">
+                    <cursor><javafx.scene.Cursor fx:constant="HAND"/></cursor>
+                </Button>
             </VBox>
 
-            <Separator/>
-
-            <VBox spacing="10">
-                <Button fx:id="saveButton" text="Save"
-                        onAction="#onSave" maxWidth="Infinity"
-                        style="-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;"/>
-                <Button text="Clear" onAction="#onClear"
-                        maxWidth="Infinity"
-                        style="-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;"/>
-            </VBox>
         </VBox>
     </right>
+
 </BorderPane>

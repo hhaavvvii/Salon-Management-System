@@ -82,10 +82,10 @@ public class AppointmentDaoImpl implements AppointmentDao {
     @Override
     public void insert(Appointment a) {
         String sql = """
-            INSERT INTO appointments
-            (client_id, employee_id, service_id, start_time, end_time, status)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """;
+        INSERT INTO appointments
+        (client_id, employee_id, service_id, start_time, end_time, status, price, duration_minutes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """;
 
         try (Connection c = DBUtil.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -93,9 +93,11 @@ public class AppointmentDaoImpl implements AppointmentDao {
             ps.setLong(1, a.getClientId());
             ps.setLong(2, a.getEmployeeId());
             ps.setLong(3, a.getServiceId());
-            ps.setString(4, a.getStartTime().toString());
-            ps.setString(5, a.getEndTime().toString());
+            ps.setString(4, a.getStartTime().format(DB_DATE_TIME_FORMATTER)); // ← ЗДЕСЬ
+            ps.setString(5, a.getEndTime().format(DB_DATE_TIME_FORMATTER));   // ← ЗДЕСЬ
             ps.setString(6, a.getStatus().name());
+            ps.setDouble(7, a.getPrice());
+            ps.setInt(8, a.getDurationMinutes());
 
             ps.executeUpdate();
 
@@ -107,20 +109,20 @@ public class AppointmentDaoImpl implements AppointmentDao {
     @Override
     public void update(Appointment a) {
         String sql = """
-            UPDATE appointments
-            SET employee_id = ?,
-                start_time = ?,
-                end_time = ?,
-                status = ?
-            WHERE id = ?
-        """;
+        UPDATE appointments
+        SET employee_id = ?,
+            start_time = ?,
+            end_time = ?,
+            status = ?
+        WHERE id = ?
+    """;
 
         try (Connection c = DBUtil.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, a.getEmployeeId());
-            ps.setString(2, a.getStartTime().toString());
-            ps.setString(3, a.getEndTime().toString());
+            ps.setString(2, a.getStartTime().format(DB_DATE_TIME_FORMATTER)); // ← ЗДЕСЬ
+            ps.setString(3, a.getEndTime().format(DB_DATE_TIME_FORMATTER));   // ← ЗДЕСЬ
             ps.setString(4, a.getStatus().name());
             ps.setLong(5, a.getId());
 
@@ -207,9 +209,8 @@ public class AppointmentDaoImpl implements AppointmentDao {
         SELECT 1
         FROM appointments
         WHERE employee_id = ?
-          AND start_time < ?
-          AND end_time   > ?
-          AND status != 'CANCELED'
+          AND status != 'CANCELLED'
+          AND NOT (end_time <= ? OR start_time >= ?)
         LIMIT 1
     """;
 
@@ -217,8 +218,8 @@ public class AppointmentDaoImpl implements AppointmentDao {
              PreparedStatement ps = c.prepareStatement(sql)) {
 
             ps.setLong(1, employeeId);
-            ps.setString(2, end.toString());
-            ps.setString(3, start.toString());
+            ps.setString(2, start.format(DB_DATE_TIME_FORMATTER));
+            ps.setString(3, end.format(DB_DATE_TIME_FORMATTER));
 
             return ps.executeQuery().next();
 

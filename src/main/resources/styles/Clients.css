@@ -1,0 +1,261 @@
+/* Modern Minimalist Purple Theme for Clients View */
+
+/* Root Colors */
+.root {
+    -fx-base: #FAFAFA;
+    -fx-background: #FAFAFA;
+    -fx-accent: #8B5CF6;
+    -fx-focus-color: #8B5CF6;
+    -fx-faint-focus-color: rgba(139, 92, 246, 0.1);
+}
+
+/* ListView Styling */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.list-view .virtual-flow .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-padding: 0 4 0 0;
+}
+
+.list-view .virtual-flow .scroll-bar:vertical .track {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 4;
+}
+
+.list-view .virtual-flow .scroll-bar:vertical .thumb {
+    -fx-background-color: #D1D5DB;
+    -fx-background-radius: 4;
+}
+
+.list-view .virtual-flow .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #9CA3AF;
+}
+
+.list-view:focused .list-cell:filled:selected {
+    -fx-background-color: transparent;
+}
+
+.list-view .list-cell:filled:selected .vbox {
+    -fx-border-color: #8B5CF6;
+    -fx-border-width: 2;
+}
+
+/* TextField Styling */
+.text-field {
+    -fx-background-color: #F9FAFB;
+    -fx-background-radius: 8;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 12 14;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1F2937;
+}
+
+.text-field:focused {
+    -fx-border-color: #8B5CF6;
+    -fx-border-width: 2;
+    -fx-background-color: white;
+}
+
+/* TextArea Styling */
+.text-area {
+    -fx-background-color: #F9FAFB;
+    -fx-background-radius: 8;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 12 14;
+    -fx-font-size: 13px;
+}
+
+.text-area:focused {
+    -fx-border-color: #8B5CF6;
+    -fx-border-width: 2;
+    -fx-background-color: white;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+.text-area .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.text-area .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ComboBox Styling */
+.combo-box {
+    -fx-background-color: #F9FAFB;
+    -fx-background-radius: 8;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.combo-box:focused {
+    -fx-border-color: #8B5CF6;
+    -fx-border-width: 2;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1F2937;
+    -fx-padding: 8 12;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 12, 0, 0, 4);
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #F3F4F6;
+}
+
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: #EDE9FE;
+    -fx-text-fill: #7C3AED;
+}
+
+/* Button Styling */
+.button {
+    -fx-font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
+}
+
+.button:pressed {
+    -fx-opacity: 0.8;
+}
+
+/* Primary Purple Button */
+.button-purple {
+    -fx-background-color: #8B5CF6;
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-padding: 10 20;
+}
+
+.button-purple:hover {
+    -fx-background-color: #7C3AED;
+}
+
+/* Secondary Button */
+.button-secondary {
+    -fx-background-color: #EDE9FE;
+    -fx-text-fill: #7C3AED;
+    -fx-font-weight: 500;
+    -fx-padding: 10 20;
+}
+
+.button-secondary:hover {
+    -fx-background-color: #DDD6FE;
+}
+
+/* Outline Button */
+.button-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6B7280;
+    -fx-border-color: #D1D5DB;
+    -fx-border-width: 1;
+    -fx-padding: 10 20;
+}
+
+.button-outline:hover {
+    -fx-background-color: #F9FAFB;
+}
+
+/* Label Styling */
+.label {
+    -fx-font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    -fx-text-fill: #1F2937;
+}
+
+/* Separator Styling */
+.separator .line {
+    -fx-background-color: #F3F4F6;
+    -fx-border-width: 0;
+}
+
+/* ScrollBar Styling */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #D1D5DB;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #9CA3AF;
+}
+
+.scroll-bar .track {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Dialog Styling */
+.dialog-pane {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+}
+
+.dialog-pane > .header-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.dialog-pane > .content {
+    -fx-padding: 20;
+}
+
+.dialog-pane > .button-bar > .container {
+    -fx-padding: 12 20 20 20;
+}
+
+.dialog-pane .button {
+    -fx-background-radius: 8;
+    -fx-padding: 10 20;
+}
+
+/* Alert Dialogs */
+.alert.information .dialog-pane,
+.alert.confirmation .dialog-pane {
+    -fx-border-color: #8B5CF6;
+    -fx-border-width: 0 0 0 4;
+}
+
+.alert.error .dialog-pane {
+    -fx-border-color: #DC2626;
+    -fx-border-width: 0 0 0 4;
+}
+
+.alert.warning .dialog-pane {
+    -fx-border-color: #F59E0B;
+    -fx-border-width: 0 0 0 4;
+}

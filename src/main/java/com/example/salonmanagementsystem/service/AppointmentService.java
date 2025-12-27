@@ -126,7 +126,7 @@ public class AppointmentService {
                 throw new ValidationException("Can only change status of PLANNED appointments");
             }
 
-            if (newStatus != AppointmentStatus.COMPLETED && newStatus != AppointmentStatus.CANCELED) {
+            if (newStatus != AppointmentStatus.COMPLETED && newStatus != AppointmentStatus.CANCELLED) {
                 throw new ValidationException("Can only change status to COMPLETED or CANCELED");
             }
         }
@@ -147,7 +147,7 @@ public class AppointmentService {
      * Для обратной совместимости
      */
     public void cancelAppointment(long appointmentId) {
-        updateStatus(appointmentId, AppointmentStatus.CANCELED);
+        updateStatus(appointmentId, AppointmentStatus.CANCELLED);
     }
 
     private void validateAppointment(Appointment appointment) {

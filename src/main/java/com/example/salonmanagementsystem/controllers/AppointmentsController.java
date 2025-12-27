@@ -7,6 +7,7 @@ import com.example.salonmanagementsystem.service.*;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import java.time.LocalDate;
@@ -28,11 +29,15 @@ public class AppointmentsController {
     @FXML private Spinner<Integer> hourSpinner;
     @FXML private Spinner<Integer> minuteSpinner;
     @FXML private Button createButton;
+    @FXML private Label formTitle;
 
     private final AppointmentService appointmentService = new AppointmentService();
     private final ClientService clientService = new ClientService();
     private final ServiceService serviceService = new ServiceService();
     private final EmployeeService employeeService = new EmployeeService();
+
+    private Appointment selectedAppointment = null;
+    private boolean isEditMode = false;
 
     @FXML
     public void initialize() {
@@ -79,35 +84,52 @@ public class AppointmentsController {
 
         for (int hour = 8; hour <= 20; hour++) {
             HBox row = new HBox(15);
-            row.setMinHeight(70);
+            row.setMinHeight(80);
+            row.setAlignment(Pos.TOP_LEFT);
+            row.setPadding(new Insets(8, 0, 8, 0));
 
+            // Time label
             Label time = new Label(String.format("%02d:00", hour));
-            time.setPrefWidth(60);
-            time.setStyle("-fx-font-weight: bold; -fx-text-fill: #6f42c1;");
+            time.setPrefWidth(70);
+            time.setStyle(
+                    "-fx-font-weight: 600; " +
+                            "-fx-text-fill: #6B7280; " +
+                            "-fx-font-size: 14px;" +
+                            "-fx-padding: 8 0 0 0;"
+            );
 
-            VBox slot = new VBox(8);
-            slot.setPrefWidth(850);
-            slot.setStyle("-fx-background-color: #ede7f6; -fx-background-radius: 12;");
-            slot.setPadding(new Insets(8));
+            // Slot container
+            VBox slot = new VBox(10);
+            HBox.setHgrow(slot, Priority.ALWAYS);
+            slot.setStyle(
+                    "-fx-background-color: #F9FAFB; " +
+                            "-fx-background-radius: 10; " +
+                            "-fx-border-color: #E5E7EB; " +
+                            "-fx-border-radius: 10; " +
+                            "-fx-border-width: 1;"
+            );
+            slot.setPadding(new Insets(12));
+            slot.setMinHeight(60);
 
-            for (Appointment a : appointments) {
-                if (a.getStartTime().getHour() == hour) {
-                    VBox card = new VBox(4);
-                    card.setPadding(new Insets(10));
-                    card.setStyle("""
-                        -fx-background-color: #6f42c1;
-                        -fx-background-radius: 14;
-                        -fx-border-color: #6f42c1;
-                        -fx-border-radius: 14;
-                        """);
+            // Find appointments for this hour
+            int finalHour = hour;
+            List<Appointment> hourAppointments = appointments.stream()
+                    .filter(a -> a.getStartTime().getHour() == finalHour)
+                    .toList();
 
-                    card.getChildren().addAll(
-                            new Label(a.getClientName()),
-                            new Label(a.getServiceName()),
-                            new Label(a.getEmployeeName()),
-                            new Label(a.getStartTime().toLocalTime() + " • " + a.getStatus().name())
-                    );
-
+            if (hourAppointments.isEmpty()) {
+                // Empty slot indicator
+                Label emptyLabel = new Label("Available");
+                emptyLabel.setStyle(
+                        "-fx-text-fill: #9CA3AF; " +
+                                "-fx-font-size: 12px; " +
+                                "-fx-font-style: italic;"
+                );
+                slot.getChildren().add(emptyLabel);
+            } else {
+                // Add appointment cards
+                for (Appointment a : hourAppointments) {
+                    HBox card = createAppointmentCard(a);
                     slot.getChildren().add(card);
                 }
             }
@@ -115,6 +137,112 @@ public class AppointmentsController {
             row.getChildren().addAll(time, slot);
             calendarContainer.getChildren().add(row);
         }
+    }
+
+    private HBox createAppointmentCard(Appointment a) {
+        HBox card = new HBox(12);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setPadding(new Insets(14));
+
+        // Status color coding
+        String cardColor = switch (a.getStatus()) {
+            case PLANNED -> "#8B5CF6";
+            case COMPLETED -> "#10B981";
+            case CANCELLED -> "#EF4444";
+        };
+
+        card.setStyle(
+                "-fx-background-color: " + cardColor + ";" +
+                        "-fx-background-radius: 10;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 1);" +
+                        "-fx-cursor: hand;"
+        );
+
+        // Make card clickable
+        card.setOnMouseClicked(event -> onAppointmentClick(a));
+
+        // Info section
+        VBox info = new VBox(4);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Label clientName = new Label("👤 " + a.getClientName());
+        clientName.setStyle(
+                "-fx-text-fill: white; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-font-size: 14px;"
+        );
+
+        Label serviceName = new Label("✂️ " + a.getServiceName());
+        serviceName.setStyle(
+                "-fx-text-fill: rgba(255,255,255,0.95); " +
+                        "-fx-font-size: 13px;"
+        );
+
+        Label employeeName = new Label("👨‍💼 " + a.getEmployeeName());
+        employeeName.setStyle(
+                "-fx-text-fill: rgba(255,255,255,0.9); " +
+                        "-fx-font-size: 12px;"
+        );
+
+        info.getChildren().addAll(clientName, serviceName, employeeName);
+
+        // Time and status section
+        VBox timeStatus = new VBox(4);
+        timeStatus.setAlignment(Pos.TOP_RIGHT);
+
+        Label timeLabel = new Label(a.getStartTime().toLocalTime().toString());
+        timeLabel.setStyle(
+                "-fx-text-fill: white; " +
+                        "-fx-font-weight: 600; " +
+                        "-fx-font-size: 13px;"
+        );
+
+        Label statusBadge = new Label(a.getStatus().name());
+        statusBadge.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.3); " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 10; " +
+                        "-fx-padding: 3 10; " +
+                        "-fx-font-size: 10px; " +
+                        "-fx-font-weight: 600;"
+        );
+
+        timeStatus.getChildren().addAll(timeLabel, statusBadge);
+
+        card.getChildren().addAll(info, timeStatus);
+
+        return card;
+    }
+
+    private void onAppointmentClick(Appointment appointment) {
+        selectedAppointment = appointment;
+        fillFormWithAppointment(appointment);
+        setEditMode();
+    }
+
+    private void fillFormWithAppointment(Appointment appointment) {
+        // Find and set client
+        clientBox.getItems().stream()
+                .filter(c -> c.getId().equals(appointment.getClientId()))
+                .findFirst()
+                .ifPresent(clientBox::setValue);
+
+        // Find and set service
+        serviceBox.getItems().stream()
+                .filter(s -> s.getId().equals(appointment.getServiceId()))
+                .findFirst()
+                .ifPresent(serviceBox::setValue);
+
+        // Find and set employee
+        employeeBox.getItems().stream()
+                .filter(e -> e.getId().equals(appointment.getEmployeeId()))
+                .findFirst()
+                .ifPresent(employeeBox::setValue);
+
+        // Set date and time
+        datePicker.setValue(appointment.getStartTime().toLocalDate());
+        hourSpinner.getValueFactory().setValue(appointment.getStartTime().getHour());
+        minuteSpinner.getValueFactory().setValue(appointment.getStartTime().getMinute());
     }
 
     @FXML
@@ -133,7 +261,7 @@ public class AppointmentsController {
     @FXML
     private void onAdd() {
         if (SessionContext.isMaster()) {
-            showError("Access denied: masters cannot create appointments");
+            showError("Access denied: masters cannot create/edit appointments");
             return;
         }
 
@@ -149,39 +277,180 @@ public class AppointmentsController {
             }
 
             LocalDateTime start = LocalDateTime.of(date, LocalTime.of(hourSpinner.getValue(), minuteSpinner.getValue()));
+            LocalDateTime end = start.plusMinutes(s.getDurationMinutes());
 
-            Appointment a = new Appointment();
-            a.setClientId(c.getId());
-            a.setServiceId(s.getId());
-            a.setEmployeeId(e.getId());
-            a.setStartTime(start);
-            a.setEndTime(start.plusMinutes(s.getDurationMinutes()));
-            a.setStatus(AppointmentStatus.PLANNED);
-            a.setPrice(s.getPrice());
-            a.setDurationMinutes(s.getDurationMinutes());
+            if (isEditMode && selectedAppointment != null) {
+                // Edit mode
+                selectedAppointment.setClientId(c.getId());
+                selectedAppointment.setServiceId(s.getId());
+                selectedAppointment.setEmployeeId(e.getId());
+                selectedAppointment.setStartTime(start);
+                selectedAppointment.setEndTime(end);
 
-            appointmentService.createAppointment(a);
+                appointmentService.updateAppointment(selectedAppointment);
+                showSuccess("Appointment updated successfully!");
+            } else {
+                // Create mode
+                Appointment a = new Appointment();
+                a.setClientId(c.getId());
+                a.setServiceId(s.getId());
+                a.setEmployeeId(e.getId());
+                a.setStartTime(start);
+                a.setEndTime(end);
+                a.setStatus(AppointmentStatus.PLANNED);
+                a.setPrice(s.getPrice());
+                a.setDurationMinutes(s.getDurationMinutes());
+
+                appointmentService.createAppointment(a);
+                showSuccess("Appointment created successfully!");
+            }
+
             renderCalendar();
-            showSuccess("Appointment created!");
+            onClear();
+
         } catch (Exception ex) {
             ex.printStackTrace();
-            showError("Failed to create appointment: " + ex.getMessage());
+            showError("Failed to save appointment: " + ex.getMessage());
+        }
+    }
+
+    @FXML
+    private void onClear() {
+        clearForm();
+        setAddMode();
+    }
+
+    @FXML
+    private void onCancel() {
+        if (selectedAppointment == null) {
+            showWarning("Please select an appointment first");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.CANCELLED) {
+            showWarning("Appointment is already cancelled");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Cancel Appointment");
+        confirmation.setHeaderText("Are you sure?");
+        confirmation.setContentText("Do you want to cancel this appointment?");
+
+        DialogPane dialogPane = confirmation.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: white;");
+
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    appointmentService.updateStatus(selectedAppointment.getId(), AppointmentStatus.CANCELLED);
+                    showSuccess("Appointment cancelled successfully");
+                    renderCalendar();
+                    onClear();
+                } catch (Exception e) {
+                    showError("Failed to cancel appointment: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void onComplete() {
+        if (selectedAppointment == null) {
+            showWarning("Please select an appointment first");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.COMPLETED) {
+            showWarning("Appointment is already completed");
+            return;
+        }
+
+        if (selectedAppointment.getStatus() == AppointmentStatus.CANCELLED) {
+            showWarning("Cannot complete a cancelled appointment");
+            return;
+        }
+
+        try {
+            appointmentService.updateStatus(selectedAppointment.getId(), AppointmentStatus.COMPLETED);
+            showSuccess("Appointment marked as completed");
+            renderCalendar();
+            onClear();
+        } catch (Exception e) {
+            showError("Failed to complete appointment: " + e.getMessage());
+        }
+    }
+
+    private void clearForm() {
+        clientBox.setValue(null);
+        serviceBox.setValue(null);
+        employeeBox.setValue(null);
+        datePicker.setValue(LocalDate.now());
+        hourSpinner.getValueFactory().setValue(10);
+        minuteSpinner.getValueFactory().setValue(0);
+        selectedAppointment = null;
+    }
+
+    private void setAddMode() {
+        isEditMode = false;
+        selectedAppointment = null;
+
+        if (formTitle != null) {
+            formTitle.setText("Create Appointment");
+        }
+
+        if (createButton != null) {
+            createButton.setText("Create Appointment");
+            createButton.setStyle(
+                    "-fx-background-color: #8B5CF6; -fx-text-fill: white; " +
+                            "-fx-background-radius: 8; -fx-padding: 14 24; " +
+                            "-fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;"
+            );
+        }
+    }
+
+    private void setEditMode() {
+        isEditMode = true;
+
+        if (formTitle != null) {
+            formTitle.setText("Edit Appointment");
+        }
+
+        if (createButton != null) {
+            createButton.setText("Update Appointment");
+            createButton.setStyle(
+                    "-fx-background-color: #F59E0B; -fx-text-fill: white; " +
+                            "-fx-background-radius: 8; -fx-padding: 14 24; " +
+                            "-fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;"
+            );
         }
     }
 
     private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Operation Failed");
-        alert.setContentText(message);
-        alert.showAndWait();
+        showAlert(Alert.AlertType.ERROR, "Error", "Operation Failed", message);
     }
 
     private void showSuccess(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Success");
-        alert.setHeaderText("Operation Completed");
-        alert.setContentText(message);
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Operation Completed", message);
+    }
+
+    private void showWarning(String message) {
+        showAlert(Alert.AlertType.WARNING, "Warning", "Attention Required", message);
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+
+        // Modern alert styling
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-font-family: 'Segoe UI', sans-serif;"
+        );
+
         alert.showAndWait();
     }
 }

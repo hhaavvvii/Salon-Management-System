@@ -21,25 +21,21 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Контроллер для окна Reports
- * Управляет отображением аналитических отчетов
- */
 public class ReportsController {
 
-    // Сервисы
+    // Services
     private final ReportService reportService = new ReportService();
     private final EmployeeService employeeService = new EmployeeService();
     private final ServiceService serviceItemService = new ServiceService();
 
-    // Фильтры периода
+    // Period Filters
     @FXML private DatePicker fromDatePicker;
     @FXML private DatePicker toDatePicker;
     @FXML private Label totalRevenueLabel;
     @FXML private Label statusLabel;
     @FXML private TabPane reportsTabPane;
 
-    // === Вкладка: Revenue ===
+    // Revenue Tab
     @FXML private TableView<RevenueReportRow> revenueTable;
     @FXML private TableColumn<RevenueReportRow, LocalDate> revDateCol;
     @FXML private TableColumn<RevenueReportRow, String> revEmployeeCol;
@@ -49,7 +45,7 @@ public class ReportsController {
     @FXML private ComboBox<Employee> employeeFilterBox;
     @FXML private ComboBox<Service> serviceFilterBox;
 
-    // === Вкладка: Employee Load ===
+    // Employee Load Tab
     @FXML private TableView<EmployeeLoadReportRow> employeeLoadTable;
     @FXML private TableColumn<EmployeeLoadReportRow, String> empNameCol;
     @FXML private TableColumn<EmployeeLoadReportRow, Integer> empAppointmentsCol;
@@ -57,7 +53,7 @@ public class ReportsController {
     @FXML private TableColumn<EmployeeLoadReportRow, Double> empRevenueCol;
     @FXML private TableColumn<EmployeeLoadReportRow, Double> empLoadCol;
 
-    // === Вкладка: Client Activity ===
+    // Client Activity Tab
     @FXML private TableView<ClientActivityReportRow> clientActivityTable;
     @FXML private TableColumn<ClientActivityReportRow, String> clientNameCol;
     @FXML private TableColumn<ClientActivityReportRow, String> clientPhoneCol;
@@ -65,7 +61,7 @@ public class ReportsController {
     @FXML private TableColumn<ClientActivityReportRow, Double> clientSpentCol;
     @FXML private TableColumn<ClientActivityReportRow, String> clientLastVisitCol;
 
-    // === Вкладка: Services ===
+    // Services Tab
     @FXML private TableView<ServiceReportRow> servicesTable;
     @FXML private TableColumn<ServiceReportRow, String> svcNameCol;
     @FXML private TableColumn<ServiceReportRow, Integer> svcBookedCol;
@@ -80,10 +76,14 @@ public class ReportsController {
         updateStatus("Ready. Select period and click 'Generate Report'");
     }
 
-    /**
-     * Настройка всех таблиц
-     */
     private void setupTables() {
+        // Modern table styling
+        String tableStyle = "-fx-background-color: white; -fx-border-width: 0;";
+        revenueTable.setStyle(tableStyle);
+        employeeLoadTable.setStyle(tableStyle);
+        clientActivityTable.setStyle(tableStyle);
+        servicesTable.setStyle(tableStyle);
+
         // Revenue Table
         revDateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
         revEmployeeCol.setCellValueFactory(new PropertyValueFactory<>("employeeName"));
@@ -91,6 +91,7 @@ public class ReportsController {
         revCountCol.setCellValueFactory(new PropertyValueFactory<>("completedCount"));
         revTotalCol.setCellValueFactory(new PropertyValueFactory<>("totalRevenue"));
         formatMoneyColumn(revTotalCol);
+        revCountCol.setStyle("-fx-alignment: CENTER;");
 
         // Employee Load Table
         empNameCol.setCellValueFactory(new PropertyValueFactory<>("employeeName"));
@@ -100,6 +101,7 @@ public class ReportsController {
         empLoadCol.setCellValueFactory(new PropertyValueFactory<>("loadPercentage"));
         formatMoneyColumn(empRevenueCol);
         formatPercentColumn(empLoadCol);
+        empAppointmentsCol.setStyle("-fx-alignment: CENTER;");
 
         // Client Activity Table
         clientNameCol.setCellValueFactory(new PropertyValueFactory<>("clientName"));
@@ -108,6 +110,7 @@ public class ReportsController {
         clientSpentCol.setCellValueFactory(new PropertyValueFactory<>("totalSpent"));
         clientLastVisitCol.setCellValueFactory(new PropertyValueFactory<>("lastVisitDate"));
         formatMoneyColumn(clientSpentCol);
+        clientVisitsCol.setStyle("-fx-alignment: CENTER;");
 
         // Services Table
         svcNameCol.setCellValueFactory(new PropertyValueFactory<>("serviceName"));
@@ -116,37 +119,29 @@ public class ReportsController {
         svcAvgPriceCol.setCellValueFactory(new PropertyValueFactory<>("averagePrice"));
         formatMoneyColumn(svcRevenueCol);
         formatMoneyColumn(svcAvgPriceCol);
+        svcBookedCol.setStyle("-fx-alignment: CENTER;");
     }
 
-    /**
-     * Загрузка данных для фильтров
-     */
     private void loadFilters() {
-        // Загрузка сотрудников
+        // Load employees
         List<Employee> employees = employeeService.getAllEmployees();
         ObservableList<Employee> employeeList = FXCollections.observableArrayList(employees);
         employeeFilterBox.setItems(employeeList);
         employeeFilterBox.setPromptText("All employees");
 
-        // Загрузка услуг
+        // Load services
         List<Service> services = serviceItemService.getAllServices();
         ObservableList<Service> serviceList = FXCollections.observableArrayList(services);
         serviceFilterBox.setItems(serviceList);
         serviceFilterBox.setPromptText("All services");
     }
 
-    /**
-     * Установка дат по умолчанию (текущий месяц)
-     */
     private void setDefaultDates() {
         LocalDate now = LocalDate.now();
         fromDatePicker.setValue(now.withDayOfMonth(1));
         toDatePicker.setValue(now);
     }
 
-    /**
-     * Генерация всех отчетов
-     */
     @FXML
     private void onGenerate() {
         try {
@@ -158,21 +153,19 @@ public class ReportsController {
                 return;
             }
 
-            List<RevenueReportRow> revenueData = reportService.generateRevenueReport(from, to, null, null);
-            System.out.println("Revenue rows: " + revenueData.size());
-
-            if (!revenueData.isEmpty()) {
-                System.out.println("First row: " + revenueData.get(0));
+            if (from.isAfter(to)) {
+                showError("Start date cannot be after end date");
+                return;
             }
 
-            // Генерация отчетов в зависимости от активной вкладки
+            // Generate all reports
             generateAllReports(from, to);
 
-            // Обновление общей выручки
+            // Update total revenue
             Double totalRevenue = reportService.getTotalRevenue(from, to);
             totalRevenueLabel.setText(String.format("%.2f ₸", totalRevenue));
 
-            updateStatus("Reports generated successfully for period: " + from + " to " + to);
+            updateStatus("✓ Reports generated for period: " + from + " to " + to);
 
         } catch (ValidationException e) {
             showError(e.getMessage());
@@ -182,43 +175,24 @@ public class ReportsController {
         }
     }
 
-    /**
-     * Генерация всех отчетов сразу
-     */
     private void generateAllReports(LocalDate from, LocalDate to) {
         // Revenue
         List<RevenueReportRow> revenueData = reportService.generateRevenueReport(from, to, null, null);
         revenueTable.setItems(FXCollections.observableArrayList(revenueData));
-        System.out.println("Revenue loaded: " + revenueData.size());
 
         // Employee Load
         List<EmployeeLoadReportRow> employeeData = reportService.generateEmployeeLoadReport(from, to);
-        System.out.println("Employee data loaded: " + employeeData.size());
-        if (!employeeData.isEmpty()) {
-            System.out.println("First employee: " + employeeData.get(0));
-        }
         employeeLoadTable.setItems(FXCollections.observableArrayList(employeeData));
 
         // Client Activity
         List<ClientActivityReportRow> clientData = reportService.generateClientActivityReport(from, to);
-        System.out.println("Client data loaded: " + clientData.size());
-        if (!clientData.isEmpty()) {
-            System.out.println("First client: " + clientData.get(0));
-        }
         clientActivityTable.setItems(FXCollections.observableArrayList(clientData));
 
         // Services
         List<ServiceReportRow> serviceData = reportService.generateServiceStatistics(from, to);
-        System.out.println("Service data loaded: " + serviceData.size());
-        if (!serviceData.isEmpty()) {
-            System.out.println("First service: " + serviceData.get(0));
-        }
         servicesTable.setItems(FXCollections.observableArrayList(serviceData));
     }
 
-    /**
-     * Применение фильтров для отчета по выручке
-     */
     @FXML
     private void onApplyRevenueFilters() {
         try {
@@ -238,7 +212,7 @@ public class ReportsController {
             List<RevenueReportRow> data = reportService.generateRevenueReport(from, to, employeeId, serviceId);
             revenueTable.setItems(FXCollections.observableArrayList(data));
 
-            updateStatus("Revenue report filtered");
+            updateStatus("✓ Revenue filters applied");
 
         } catch (ValidationException e) {
             showError(e.getMessage());
@@ -247,14 +221,11 @@ public class ReportsController {
         }
     }
 
-    /**
-     * Экспорт текущего отчета в CSV
-     */
     @FXML
     private void onExport() {
         try {
             Tab selectedTab = reportsTabPane.getSelectionModel().getSelectedItem();
-            String tabName = selectedTab.getText();
+            String tabName = selectedTab.getText().replaceAll("[^a-zA-Z\\s]", "").trim(); // Remove emojis
 
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Export Report");
@@ -266,7 +237,7 @@ public class ReportsController {
             File file = fileChooser.showSaveDialog(reportsTabPane.getScene().getWindow());
             if (file != null) {
                 exportCurrentTab(tabName, file.getAbsolutePath());
-                showInfo("Report exported successfully to: " + file.getName());
+                showInfo("✓ Report exported successfully to: " + file.getName());
             }
 
         } catch (Exception e) {
@@ -275,9 +246,6 @@ public class ReportsController {
         }
     }
 
-    /**
-     * Экспорт текущей вкладки
-     */
     private void exportCurrentTab(String tabName, String filepath) throws Exception {
         switch (tabName) {
             case "Revenue" -> {
@@ -299,9 +267,6 @@ public class ReportsController {
         }
     }
 
-    /**
-     * Сброс фильтров
-     */
     @FXML
     private void onReset() {
         setDefaultDates();
@@ -315,9 +280,6 @@ public class ReportsController {
         updateStatus("Filters reset");
     }
 
-    /**
-     * Форматирование колонки с деньгами
-     */
     private <T> void formatMoneyColumn(TableColumn<T, Double> column) {
         column.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -325,16 +287,15 @@ public class ReportsController {
                 super.updateItem(amount, empty);
                 if (empty || amount == null) {
                     setText(null);
+                    setStyle("");
                 } else {
                     setText(String.format("%.2f ₸", amount));
+                    setStyle("-fx-font-weight: 600; -fx-text-fill: #059669;");
                 }
             }
         });
     }
 
-    /**
-     * Форматирование колонки с процентами
-     */
     private <T> void formatPercentColumn(TableColumn<T, Double> column) {
         column.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -342,8 +303,18 @@ public class ReportsController {
                 super.updateItem(percent, empty);
                 if (empty || percent == null) {
                     setText(null);
+                    setStyle("");
                 } else {
                     setText(String.format("%.1f%%", percent));
+
+                    // Color coding based on load percentage
+                    if (percent >= 80) {
+                        setStyle("-fx-text-fill: #DC2626; -fx-font-weight: 600;"); // High load - red
+                    } else if (percent >= 60) {
+                        setStyle("-fx-text-fill: #F59E0B; -fx-font-weight: 600;"); // Medium load - amber
+                    } else {
+                        setStyle("-fx-text-fill: #10B981; -fx-font-weight: 600;"); // Low load - green
+                    }
                 }
             }
         });
@@ -354,18 +325,26 @@ public class ReportsController {
     }
 
     private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        showAlert(Alert.AlertType.ERROR, "Error", "Operation Failed", message);
     }
 
     private void showInfo(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Success");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Operation Completed", message);
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+
+        // Modern alert styling
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-font-family: 'Segoe UI', sans-serif;"
+        );
+
         alert.showAndWait();
     }
 }

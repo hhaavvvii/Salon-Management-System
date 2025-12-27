@@ -3,7 +3,7 @@ package com.example.salonmanagementsystem.model;
 public enum AppointmentStatus {
     PLANNED("Planned"),
     COMPLETED("Completed"),
-    CANCELED("Canceled");
+    CANCELLED("Cancelled");
 
     private final String displayName;
 

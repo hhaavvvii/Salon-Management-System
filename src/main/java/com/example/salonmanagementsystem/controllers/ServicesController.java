@@ -9,8 +9,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 
 import java.util.List;
 
@@ -51,37 +55,78 @@ public class ServicesController {
     private void setupListView() {
         servicesListView.setItems(serviceData);
 
+        // Modern transparent list styling
+        servicesListView.setStyle("-fx-background-color: transparent; -fx-border-width: 0;");
+
         servicesListView.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(Service service, boolean empty) {
                 super.updateItem(service, empty);
                 if (empty || service == null) {
+                    setText(null);
                     setGraphic(null);
+                    setStyle("-fx-background-color: transparent;");
                 } else {
-                    VBox card = new VBox(4);
-                    card.setPadding(new Insets(10));
+                    // Main card container
+                    VBox card = new VBox(12);
+                    card.setPadding(new Insets(20));
                     card.setStyle(
-                            "-fx-background-color: #f3e8ff;" +
-                                    "-fx-background-radius: 10;" +
-                                    "-fx-border-radius: 10;" +
-                                    "-fx-border-color: #d9cfff;" +
+                            "-fx-background-color: white;" +
+                                    "-fx-background-radius: 12;" +
+                                    "-fx-border-radius: 12;" +
+                                    "-fx-border-color: #E5E7EB;" +
                                     "-fx-border-width: 1;" +
-                                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4,0,0,1);"
+                                    "-fx-effect: dropshadow(gaussian, rgba(139,92,246,0.06), 8, 0, 0, 2);" +
+                                    "-fx-cursor: hand;"
                     );
 
+                    // Header with name and status
+                    HBox header = new HBox(12);
+                    header.setAlignment(Pos.CENTER_LEFT);
+
                     Label name = new Label(service.getName());
-                    name.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+                    name.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1F2937;");
 
-                    Label category = new Label("Category: " + service.getCategory());
-                    Label price = new Label(String.format("Price: %.2f ₸", service.getPrice()));
-                    Label duration = new Label("Duration: " + service.getDurationMinutes() + " min");
-                    Label status = new Label("Status: " + service.getStatus());
-                    status.setStyle(service.isActive()
-                            ? "-fx-text-fill: green; -fx-font-weight: bold;"
-                            : "-fx-text-fill: red; -fx-font-weight: bold;");
+                    Region spacer = new Region();
+                    HBox.setHgrow(spacer, Priority.ALWAYS);
 
-                    card.getChildren().addAll(name, category, price, duration, status);
+                    // Modern status badge
+                    Label status = new Label(service.getStatus());
+                    if (service.isActive()) {
+                        status.setStyle(
+                                "-fx-background-color: #D1FAE5; -fx-text-fill: #065F46;" +
+                                        "-fx-background-radius: 12; -fx-padding: 4 12;" +
+                                        "-fx-font-size: 11px; -fx-font-weight: 600;"
+                        );
+                    } else {
+                        status.setStyle(
+                                "-fx-background-color: #FEE2E2; -fx-text-fill: #991B1B;" +
+                                        "-fx-background-radius: 12; -fx-padding: 4 12;" +
+                                        "-fx-font-size: 11px; -fx-font-weight: 600;"
+                        );
+                    }
+
+                    header.getChildren().addAll(name, spacer, status);
+
+                    // Info rows with icons
+                    VBox info = new VBox(6);
+
+                    Label category = new Label("📁 " + service.getCategory());
+                    category.setStyle("-fx-font-size: 13px; -fx-text-fill: #4B5563;");
+
+                    Label price = new Label(String.format("💰 %.2f ₸", service.getPrice()));
+                    price.setStyle("-fx-font-size: 13px; -fx-text-fill: #4B5563; -fx-font-weight: 600;");
+
+                    Label duration = new Label("⏱️ " + service.getDurationMinutes() + " minutes");
+                    duration.setStyle("-fx-font-size: 13px; -fx-text-fill: #4B5563;");
+
+                    info.getChildren().addAll(category, price, duration);
+
+                    card.getChildren().addAll(header, info);
                     setGraphic(card);
+
+                    // Cell background styling
+                    setStyle("-fx-background-color: transparent; -fx-padding: 6;");
                 }
             }
         });
@@ -151,7 +196,7 @@ public class ServicesController {
     @FXML
     private void onSave() {
         if (SessionContext.isMaster()) {
-            showError("Access denied");
+            showError("Access denied: masters cannot create or edit services");
             return;
         }
         try {
@@ -169,6 +214,7 @@ public class ServicesController {
 
             loadData();
             onClear();
+            showSuccess(isEditMode ? "Service updated successfully" : "Service created successfully");
         } catch (Exception e) {
             showError(e.getMessage());
         }
@@ -176,12 +222,23 @@ public class ServicesController {
 
     @FXML
     private void onEdit() {
-        if (SessionContext.isMaster()) { showError("Access denied"); return; }
-        if (selectedService == null) { showError("Select a service first"); return; }
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot edit services");
+            return;
+        }
+        if (selectedService == null) {
+            showError("Select a service first");
+            return;
+        }
 
         isEditMode = true;
         formTitle.setText("Edit Service");
         saveButton.setText("Update Service");
+        saveButton.setStyle(
+                "-fx-background-color: #F59E0B; -fx-text-fill: white; " +
+                        "-fx-background-radius: 8; -fx-padding: 14 24; " +
+                        "-fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;"
+        );
 
         nameField.setText(selectedService.getName());
         categoryBox.setValue(selectedService.getCategory());
@@ -206,6 +263,11 @@ public class ServicesController {
         isEditMode = false;
         formTitle.setText("Add New Service");
         saveButton.setText("Save Service");
+        saveButton.setStyle(
+                "-fx-background-color: #8B5CF6; -fx-text-fill: white; " +
+                        "-fx-background-radius: 8; -fx-padding: 14 24; " +
+                        "-fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;"
+        );
     }
 
     private void validateForm() throws ValidationException {
@@ -213,5 +275,31 @@ public class ServicesController {
             throw new ValidationException("Fill all required fields");
     }
 
-    private void showError(String m) { new Alert(Alert.AlertType.ERROR, m).showAndWait(); }
+    private void showError(String message) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Operation Failed", message);
+    }
+
+    private void showSuccess(String message) {
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Operation Completed", message);
+    }
+
+    private void showWarning(String message) {
+        showAlert(Alert.AlertType.WARNING, "Warning", "Attention Required", message);
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+
+        // Modern alert styling
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-font-family: 'Segoe UI', sans-serif;"
+        );
+
+        alert.showAndWait();
+    }
 }

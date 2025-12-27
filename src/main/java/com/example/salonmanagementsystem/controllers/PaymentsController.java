@@ -56,9 +56,19 @@ public class PaymentsController {
     }
 
     private void setupTable() {
+        // Modern table styling
+        paymentsTable.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-background-radius: 12; " +
+                        "-fx-border-color: #E5E7EB; " +
+                        "-fx-border-radius: 12;"
+        );
+
         idCol.setCellValueFactory(data ->
                 new SimpleStringProperty(String.valueOf(data.getValue().getId()))
         );
+
+        idCol.setStyle("-fx-alignment: CENTER;");
 
         dateCol.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getPaymentDate().format(DATE_FORMATTER))
@@ -77,8 +87,24 @@ public class PaymentsController {
         );
 
         amountCol.setCellValueFactory(data ->
-                new SimpleStringProperty(String.format("%.2f", data.getValue().getAmount()))
+                new SimpleStringProperty(String.format("%.2f ₸", data.getValue().getAmount()))
         );
+
+        amountCol.setStyle("-fx-alignment: CENTER-RIGHT;");
+
+        amountCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String amount, boolean empty) {
+                super.updateItem(amount, empty);
+                if (empty || amount == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(amount);
+                    setStyle("-fx-font-weight: 600; -fx-text-fill: #059669;");
+                }
+            }
+        });
 
         methodCol.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getPaymentMethod().getDisplayName())
@@ -88,7 +114,9 @@ public class PaymentsController {
                 new SimpleStringProperty(data.getValue().getStatus().getDisplayName())
         );
 
-        // Цветовое выделение статуса
+        statusCol.setStyle("-fx-alignment: CENTER;");
+
+        // Modern status badges
         statusCol.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -100,9 +128,25 @@ public class PaymentsController {
                 } else {
                     setText(status);
                     if (status.equals("Paid")) {
-                        setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
+                        setStyle(
+                                "-fx-background-color: #D1FAE5; " +
+                                        "-fx-text-fill: #065F46; " +
+                                        "-fx-background-radius: 12; " +
+                                        "-fx-padding: 4 12; " +
+                                        "-fx-font-size: 11px; " +
+                                        "-fx-font-weight: 600; " +
+                                        "-fx-alignment: CENTER;"
+                        );
                     } else if (status.equals("Refunded")) {
-                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                        setStyle(
+                                "-fx-background-color: #FEE2E2; " +
+                                        "-fx-text-fill: #991B1B; " +
+                                        "-fx-background-radius: 12; " +
+                                        "-fx-padding: 4 12; " +
+                                        "-fx-font-size: 11px; " +
+                                        "-fx-font-weight: 600; " +
+                                        "-fx-alignment: CENTER;"
+                        );
                     }
                 }
             }
@@ -145,39 +189,41 @@ public class PaymentsController {
 
     private void loadCompletedAppointments() {
         try {
-            List<Appointment> allAppointments = appointmentService.getAppointments();
-            List<Appointment> completed = allAppointments.stream()
+            List<Appointment> allAppointments = appointmentService.getAllAppointments();
+
+            List<Appointment> unpaid = allAppointments.stream()
                     .filter(a -> a.getStatus() == AppointmentStatus.COMPLETED)
                     .filter(a -> !paymentService.isAppointmentPaid(a.getId()))
                     .toList();
 
-            appointmentBox.setItems(FXCollections.observableArrayList(completed));
+            System.out.println("Unpaid completed appointments: " + unpaid.size());
 
-            appointmentBox.setButtonCell(new ListCell<>() {
+            // Для отладки - выводим что именно там
+            for (Appointment a : unpaid) {
+                System.out.println("ID: " + a.getId() + ", Client: " + a.getClientName() + ", Service: " + a.getServiceName());
+            }
+
+            appointmentBox.getItems().clear();
+            appointmentBox.getItems().addAll(unpaid);
+
+            // Простой способ отображения
+            appointmentBox.setConverter(new javafx.util.StringConverter<Appointment>() {
                 @Override
-                protected void updateItem(Appointment appointment, boolean empty) {
-                    super.updateItem(appointment, empty);
-                    if (empty || appointment == null) {
-                        setText(null);
-                    } else {
-                        setText(appointment.getClientName() + " - " + appointment.getServiceName());
+                public String toString(Appointment appointment) {
+                    if (appointment == null) {
+                        return null;
                     }
+                    return appointment.getClientName() + " - " + appointment.getServiceName() + " (" + appointment.getStartTime().toLocalDate() + ")";
                 }
-            });
 
-            appointmentBox.setCellFactory(lv -> new ListCell<>() {
                 @Override
-                protected void updateItem(Appointment appointment, boolean empty) {
-                    super.updateItem(appointment, empty);
-                    if (empty || appointment == null) {
-                        setText(null);
-                    } else {
-                        setText(appointment.getClientName() + " - " + appointment.getServiceName());
-                    }
+                public Appointment fromString(String string) {
+                    return null;
                 }
             });
 
         } catch (Exception e) {
+            e.printStackTrace();
             showError("Failed to load appointments: " + e.getMessage());
         }
     }
@@ -247,6 +293,10 @@ public class PaymentsController {
         dialog.setTitle("Refund Payment");
         dialog.setHeaderText("Refund Payment");
         dialog.setContentText("Reason for refund:");
+
+        // Style the dialog
+        DialogPane dialogPane = dialog.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: white;");
 
         dialog.showAndWait().ifPresent(reason -> {
             try {
@@ -318,26 +368,30 @@ public class PaymentsController {
     }
 
     private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Operation Failed");
-        alert.setContentText(message);
-        alert.showAndWait();
+        showAlert(Alert.AlertType.ERROR, "Error", "Operation Failed", message);
     }
 
     private void showSuccess(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Success");
-        alert.setHeaderText("Operation Completed");
-        alert.setContentText(message);
-        alert.showAndWait();
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Operation Completed", message);
     }
 
     private void showWarning(String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Warning");
-        alert.setHeaderText("Attention Required");
-        alert.setContentText(message);
+        showAlert(Alert.AlertType.WARNING, "Warning", "Attention Required", message);
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+
+        // Modern alert styling
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-font-family: 'Segoe UI', sans-serif;"
+        );
+
         alert.showAndWait();
     }
 }

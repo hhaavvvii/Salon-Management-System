@@ -9,8 +9,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
 
 import java.util.List;
 
@@ -56,11 +60,14 @@ public class ClientsController {
             if (notesField != null) notesField.setEditable(false);
             if (formTitle != null) {
                 formTitle.setText("Client Details (Read-Only)");
-                formTitle.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold;");
+                formTitle.setStyle("-fx-text-fill: #DC2626; -fx-font-weight: bold; -fx-font-size: 20px;");
             }
             if (formContainer != null) {
                 Label infoLabel = new Label("Read-only mode: you can only view clients from your appointments");
-                infoLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-weight: bold; -fx-padding: 10; -fx-background-color: #f8d7da; -fx-background-radius: 5;");
+                infoLabel.setStyle(
+                        "-fx-text-fill: #991B1B; -fx-font-weight: 600; -fx-padding: 12; " +
+                                "-fx-background-color: #FEE2E2; -fx-background-radius: 8; -fx-font-size: 12px;"
+                );
                 infoLabel.setWrapText(true);
                 infoLabel.setMaxWidth(Double.MAX_VALUE);
                 formContainer.getChildren().add(0, infoLabel);
@@ -71,6 +78,9 @@ public class ClientsController {
     private void setupListView() {
         clientsListView.setItems(clientData);
 
+        // Modern transparent list styling
+        clientsListView.setStyle("-fx-background-color: transparent; -fx-border-width: 0;");
+
         clientsListView.setCellFactory(lv -> new ListCell<Client>() {
             @Override
             protected void updateItem(Client client, boolean empty) {
@@ -78,29 +88,68 @@ public class ClientsController {
                 if (empty || client == null) {
                     setText(null);
                     setGraphic(null);
+                    setStyle("-fx-background-color: transparent;");
                 } else {
-                    VBox card = new VBox(4);
-                    card.setPadding(new Insets(10));
+                    // Main card container
+                    VBox card = new VBox(12);
+                    card.setPadding(new Insets(20));
                     card.setStyle(
-                            "-fx-background-color: linear-gradient(to right, #f3e8ff, #e0d4f8);" +
-                                    "-fx-background-radius: 10;" +
-                                    "-fx-border-radius: 10;" +
-                                    "-fx-border-color: #d9cfff;" +
+                            "-fx-background-color: white;" +
+                                    "-fx-background-radius: 12;" +
+                                    "-fx-border-radius: 12;" +
+                                    "-fx-border-color: #E5E7EB;" +
                                     "-fx-border-width: 1;" +
-                                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4,0,0,1);"
+                                    "-fx-effect: dropshadow(gaussian, rgba(139,92,246,0.06), 8, 0, 0, 2);" +
+                                    "-fx-cursor: hand;"
                     );
 
+                    // Header with name and status
+                    HBox header = new HBox(12);
+                    header.setAlignment(Pos.CENTER_LEFT);
+
                     Label name = new Label(client.getFirstName() + " " + client.getLastName());
-                    name.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+                    name.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1F2937;");
 
-                    Label phone = new Label("Phone: " + client.getPhone());
-                    Label email = new Label("Email: " + (client.getEmail() != null ? client.getEmail() : ""));
-                    Label status = new Label("Status: " + client.getStatus());
-                    if ("ACTIVE".equals(client.getStatus())) status.setStyle("-fx-text-fill: green; -fx-font-weight: bold;");
-                    else status.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                    Region spacer = new Region();
+                    HBox.setHgrow(spacer, Priority.ALWAYS);
 
-                    card.getChildren().addAll(name, phone, email, status);
+                    // Modern status badge
+                    Label status = new Label(client.getStatus());
+                    if ("ACTIVE".equals(client.getStatus())) {
+                        status.setStyle(
+                                "-fx-background-color: #D1FAE5; -fx-text-fill: #065F46;" +
+                                        "-fx-background-radius: 12; -fx-padding: 4 12;" +
+                                        "-fx-font-size: 11px; -fx-font-weight: 600;"
+                        );
+                    } else {
+                        status.setStyle(
+                                "-fx-background-color: #FEE2E2; -fx-text-fill: #991B1B;" +
+                                        "-fx-background-radius: 12; -fx-padding: 4 12;" +
+                                        "-fx-font-size: 11px; -fx-font-weight: 600;"
+                        );
+                    }
+
+                    header.getChildren().addAll(name, spacer, status);
+
+                    // Info rows with icons
+                    VBox info = new VBox(6);
+
+                    Label phone = new Label("📞 " + client.getPhone());
+                    phone.setStyle("-fx-font-size: 13px; -fx-text-fill: #4B5563;");
+
+                    String emailText = (client.getEmail() != null && !client.getEmail().isEmpty())
+                            ? client.getEmail()
+                            : "No email provided";
+                    Label email = new Label("✉️ " + emailText);
+                    email.setStyle("-fx-font-size: 13px; -fx-text-fill: #4B5563;");
+
+                    info.getChildren().addAll(phone, email);
+
+                    card.getChildren().addAll(header, info);
                     setGraphic(card);
+
+                    // Cell background styling
+                    setStyle("-fx-background-color: transparent; -fx-padding: 6;");
                 }
             }
         });
@@ -155,7 +204,10 @@ public class ClientsController {
 
     @FXML
     private void onSave() {
-        if (SessionContext.isMaster()) { showError("Access denied: masters cannot create or edit clients"); return; }
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot create or edit clients");
+            return;
+        }
         try {
             validateForm();
             Client client = isEditMode ? selectedClient : new Client();
@@ -170,6 +222,7 @@ public class ClientsController {
 
             loadData();
             onClear();
+            showSuccess(isEditMode ? "Client updated successfully" : "Client created successfully");
 
         } catch (ValidationException | AccessDeniedException e) {
             showError(e.getMessage());
@@ -181,16 +234,26 @@ public class ClientsController {
 
     private void validateForm() throws ValidationException {
         StringBuilder errors = new StringBuilder();
-        if (firstNameField.getText() == null || firstNameField.getText().trim().isEmpty()) errors.append("• First name is required\n");
-        if (lastNameField.getText() == null || lastNameField.getText().trim().isEmpty()) errors.append("• Last name is required\n");
-        if (phoneField.getText() == null || phoneField.getText().trim().isEmpty()) errors.append("• Phone is required\n");
-        if (errors.length() > 0) throw new ValidationException("Please fill all required fields:\n" + errors);
+        if (firstNameField.getText() == null || firstNameField.getText().trim().isEmpty())
+            errors.append("• First name is required\n");
+        if (lastNameField.getText() == null || lastNameField.getText().trim().isEmpty())
+            errors.append("• Last name is required\n");
+        if (phoneField.getText() == null || phoneField.getText().trim().isEmpty())
+            errors.append("• Phone is required\n");
+        if (errors.length() > 0)
+            throw new ValidationException("Please fill all required fields:\n" + errors);
     }
 
     @FXML
     private void onEdit() {
-        if (SessionContext.isMaster()) { showError("Access denied: masters cannot edit clients"); return; }
-        if (selectedClient == null) { showError("Please select a client to edit"); return; }
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot edit clients");
+            return;
+        }
+        if (selectedClient == null) {
+            showWarning("Please select a client to edit");
+            return;
+        }
         setEditMode();
         fillFormWithClient(selectedClient);
     }
@@ -205,18 +268,42 @@ public class ClientsController {
 
     @FXML
     private void onDeactivate() {
-        if (SessionContext.isMaster()) { showError("Access denied: masters cannot deactivate clients"); return; }
-        if (selectedClient == null) { showWarning("Please select a client to deactivate"); return; }
-        if (!selectedClient.isActive()) { showWarning("Client is already inactive"); return; }
+        if (SessionContext.isMaster()) {
+            showError("Access denied: masters cannot deactivate clients");
+            return;
+        }
+        if (selectedClient == null) {
+            showWarning("Please select a client to deactivate");
+            return;
+        }
+        if (!selectedClient.isActive()) {
+            showWarning("Client is already inactive");
+            return;
+        }
 
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
         confirmation.setTitle("Confirm Deactivation");
         confirmation.setHeaderText("Deactivate Client");
-        confirmation.setContentText("Are you sure you want to deactivate " + selectedClient.getFirstName() + " " + selectedClient.getLastName() + "?");
+        confirmation.setContentText(
+                "Are you sure you want to deactivate " +
+                        selectedClient.getFirstName() + " " + selectedClient.getLastName() + "?"
+        );
+
+        // Style the dialog
+        DialogPane dialogPane = confirmation.getDialogPane();
+        dialogPane.setStyle("-fx-background-color: white;");
+
         confirmation.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                try { clientService.deactivateClient(selectedClient.getId()); loadData(); onClear(); }
-                catch (Exception e) { showError("Error deactivating client: " + e.getMessage()); }
+                try {
+                    clientService.deactivateClient(selectedClient.getId());
+                    loadData();
+                    onClear();
+                    showSuccess("Client deactivated successfully");
+                }
+                catch (Exception e) {
+                    showError("Error deactivating client: " + e.getMessage());
+                }
             }
         });
     }
@@ -238,7 +325,11 @@ public class ClientsController {
         if (!SessionContext.isMaster()) {
             formTitle.setText("Add New Client");
             saveButton.setText("Save Client");
-            saveButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+            saveButton.setStyle(
+                    "-fx-background-color: #8B5CF6; -fx-text-fill: white; " +
+                            "-fx-background-radius: 8; -fx-padding: 14 24; " +
+                            "-fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;"
+            );
         }
     }
 
@@ -247,19 +338,39 @@ public class ClientsController {
         if (!SessionContext.isMaster()) {
             formTitle.setText("Edit Client");
             saveButton.setText("Update Client");
-            saveButton.setStyle("-fx-background-color: #ffc107; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10;");
+            saveButton.setStyle(
+                    "-fx-background-color: #F59E0B; -fx-text-fill: white; " +
+                            "-fx-background-radius: 8; -fx-padding: 14 24; " +
+                            "-fx-font-size: 14px; -fx-cursor: hand; -fx-font-weight: 600;"
+            );
         }
     }
 
-    private void showError(String message) { showAlert(Alert.AlertType.ERROR, "Error", "Operation Failed", message); }
-    private void showSuccess(String message) { showAlert(Alert.AlertType.INFORMATION, "Success", "Operation Completed", message); }
-    private void showWarning(String message) { showAlert(Alert.AlertType.WARNING, "Warning", "Attention Required", message); }
+    private void showError(String message) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Operation Failed", message);
+    }
+
+    private void showSuccess(String message) {
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Operation Completed", message);
+    }
+
+    private void showWarning(String message) {
+        showAlert(Alert.AlertType.WARNING, "Warning", "Attention Required", message);
+    }
 
     private void showAlert(Alert.AlertType type, String title, String header, String content) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(header);
         alert.setContentText(content);
+
+        // Modern alert styling
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle(
+                "-fx-background-color: white; " +
+                        "-fx-font-family: 'Segoe UI', sans-serif;"
+        );
+
         alert.showAndWait();
     }
 }
