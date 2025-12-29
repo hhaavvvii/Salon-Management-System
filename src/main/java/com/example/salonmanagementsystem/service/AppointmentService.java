@@ -16,11 +16,7 @@ public class AppointmentService {
 
     private final AppointmentDao appointmentDao = new AppointmentDaoImpl();
 
-    /**
-     * Получить все записи с учётом роли пользователя
-     * ADMIN видит все записи
-     * MASTER видит только свои записи
-     */
+
     public List<Appointment> getAllAppointments() {
         List<Appointment> appointments = appointmentDao.findAll();
 
@@ -35,17 +31,12 @@ public class AppointmentService {
         return appointments;
     }
 
-    /**
-     * Получить записи (псевдоним для getAllAppointments)
-     */
+
     public List<Appointment> getAppointments() {
         return getAllAppointments();
     }
 
-    /**
-     * Получить записи конкретного сотрудника
-     * MASTER может получить только свои записи
-     */
+
     public List<Appointment> getAppointmentsByEmployee(long employeeId) {
         // Проверка прав доступа для MASTER
         if (SessionContext.isMaster()) {
@@ -58,10 +49,7 @@ public class AppointmentService {
         return appointmentDao.findByEmployee(employeeId);
     }
 
-    /**
-     * Создать новую запись
-     * MASTER может создавать записи только для себя
-     */
+
     public void createAppointment(Appointment appointment) {
         // Для мастеров - проверяем что они создают запись только для себя
         if (SessionContext.isMaster()) {
@@ -76,17 +64,12 @@ public class AppointmentService {
         appointmentDao.insert(appointment);
     }
 
-    /**
-     * Создать запись (псевдоним для createAppointment)
-     */
+
     public void create(Appointment appointment) {
         createAppointment(appointment);
     }
 
-    /**
-     * Обновить запись
-     * MASTER может обновлять только свои записи
-     */
+
     public void updateAppointment(Appointment appointment) {
         // Проверка прав доступа для MASTER
         if (SessionContext.isMaster()) {
@@ -100,10 +83,7 @@ public class AppointmentService {
         appointmentDao.update(appointment);
     }
 
-    /**
-     * Обновить статус записи
-     * MASTER может менять статус только своих записей: PLANNED → COMPLETED/CANCELLED
-     */
+
     public void updateStatus(long appointmentId, AppointmentStatus newStatus) {
         // Для MASTER проверяем, что это его запись
         if (SessionContext.isMaster()) {
@@ -131,16 +111,12 @@ public class AppointmentService {
         appointmentDao.updateStatus(appointmentId, newStatus);
     }
 
-    /**
-     * Пометить запись как выполненную
-     */
+
     public void completeAppointment(long appointmentId) {
         updateStatus(appointmentId, AppointmentStatus.COMPLETED);
     }
 
-    /**
-     * Отменить запись
-     */
+
     public void cancelAppointment(long appointmentId) {
         updateStatus(appointmentId, AppointmentStatus.CANCELLED);
     }

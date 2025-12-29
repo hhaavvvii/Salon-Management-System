@@ -19,8 +19,6 @@ public class MainApplication extends Application {
 
         Scene scene = new Scene(root);
 
-        // Загрузить CSS (опционально, если есть)
-        // scene.getStylesheets().add(getClass().getResource("/css/app.css").toExternalForm());
 
         stage.setTitle("Salon Management System - Login");
         stage.setScene(scene);
@@ -31,7 +29,4 @@ public class MainApplication extends Application {
         stage.show();
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
 }

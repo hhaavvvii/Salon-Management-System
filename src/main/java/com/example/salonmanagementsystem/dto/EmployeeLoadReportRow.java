@@ -1,8 +1,6 @@
 package com.example.salonmanagementsystem.dto;
 
-/**
- * DTO для отображения загрузки сотрудника
- */
+
 public class EmployeeLoadReportRow {
     private String employeeName;
     private Integer totalAppointments;
@@ -63,9 +61,6 @@ public class EmployeeLoadReportRow {
         this.loadPercentage = loadPercentage;
     }
 
-    /**
-     * Возвращает общее рабочее время в формате "X hours Y min"
-     */
     public String getFormattedWorkTime() {
         if (totalMinutes == null || totalMinutes == 0) {
             return "0 min";

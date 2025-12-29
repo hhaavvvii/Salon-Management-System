@@ -22,7 +22,6 @@ public class ClientActivityReportRow {
         this.lastVisitDate = lastVisitDate;
     }
 
-    // Getters and Setters
     public String getClientName() {
         return clientName;
     }

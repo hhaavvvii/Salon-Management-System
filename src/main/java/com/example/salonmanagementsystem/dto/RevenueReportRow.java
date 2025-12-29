@@ -2,9 +2,7 @@ package com.example.salonmanagementsystem.dto;
 
 import java.time.LocalDate;
 
-/**
- * DTO для отображения строки отчета по выручке
- */
+
 public class RevenueReportRow {
     private LocalDate date;
     private String employeeName;

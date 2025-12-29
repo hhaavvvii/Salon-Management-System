@@ -14,17 +14,12 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Сервис для работы с отчетами
- * Содержит бизнес-логику формирования и экспорта отчетов
- */
+
 public class ReportService {
 
     private final ReportDao reportDao = new ReportDaoImpl();
 
-    /**
-     * Получить отчет по выручке за период
-     */
+
     public List<RevenueReportRow> generateRevenueReport(LocalDate from, LocalDate to,
                                                         Long employeeId, Long serviceId) {
         validateDateRange(from, to);
@@ -42,41 +37,31 @@ public class ReportService {
         }
     }
 
-    /**
-     * Получить отчет по загрузке сотрудников
-     */
+
     public List<EmployeeLoadReportRow> generateEmployeeLoadReport(LocalDate from, LocalDate to) {
         validateDateRange(from, to);
         return reportDao.getEmployeeLoad(from, to);
     }
 
-    /**
-     * Получить отчет по активности клиентов
-     */
+
     public List<ClientActivityReportRow> generateClientActivityReport(LocalDate from, LocalDate to) {
         validateDateRange(from, to);
         return reportDao.getClientActivity(from, to);
     }
 
-    /**
-     * Получить статистику по услугам
-     */
+
     public List<ServiceReportRow> generateServiceStatistics(LocalDate from, LocalDate to) {
         validateDateRange(from, to);
         return reportDao.getServiceStatistics(from, to);
     }
 
-    /**
-     * Получить общую выручку за период
-     */
+
     public Double getTotalRevenue(LocalDate from, LocalDate to) {
         validateDateRange(from, to);
         return reportDao.getTotalRevenue(from, to);
     }
 
-    /**
-     * Экспорт отчета по выручке в CSV
-     */
+
     public File exportRevenueReport(List<RevenueReportRow> data, String filename) throws IOException {
         String[] headers = {"Date", "Employee", "Service", "Completed Count", "Total Revenue (₸)"};
 
@@ -93,9 +78,7 @@ public class ReportService {
         return CsvExporter.exportToFile(headers, rows, filename);
     }
 
-    /**
-     * Экспорт отчета по загрузке сотрудников в CSV
-     */
+
     public File exportEmployeeLoadReport(List<EmployeeLoadReportRow> data, String filename) throws IOException {
         String[] headers = {"Employee", "Appointments", "Work Time", "Revenue (₸)", "Load %"};
 
@@ -112,9 +95,7 @@ public class ReportService {
         return CsvExporter.exportToFile(headers, rows, filename);
     }
 
-    /**
-     * Экспорт отчета по активности клиентов в CSV
-     */
+
     public File exportClientActivityReport(List<ClientActivityReportRow> data, String filename) throws IOException {
         String[] headers = {"Client Name", "Phone", "Total Visits", "Total Spent (₸)", "Last Visit"};
 
@@ -131,9 +112,7 @@ public class ReportService {
         return CsvExporter.exportToFile(headers, rows, filename);
     }
 
-    /**
-     * Экспорт статистики по услугам в CSV
-     */
+
     public File exportServiceStatistics(List<ServiceReportRow> data, String filename) throws IOException {
         String[] headers = {"Service", "Times Booked", "Total Revenue (₸)", "Average Price (₸)"};
 
@@ -149,9 +128,7 @@ public class ReportService {
         return CsvExporter.exportToFile(headers, rows, filename);
     }
 
-    /**
-     * Валидация диапазона дат
-     */
+
     private void validateDateRange(LocalDate from, LocalDate to) {
         if (from == null || to == null) {
             throw new ValidationException("Date range is required");

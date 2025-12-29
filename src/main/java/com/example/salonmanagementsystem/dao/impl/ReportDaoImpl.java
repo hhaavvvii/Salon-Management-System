@@ -15,10 +15,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Реализация DAO для отчетов
- * Все расчеты основаны на PAID платежах и COMPLETED записях
- */
 public class ReportDaoImpl implements ReportDao {
 
 

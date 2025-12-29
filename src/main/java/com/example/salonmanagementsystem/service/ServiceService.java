@@ -14,32 +14,22 @@ public class ServiceService {
 
     private final ServiceDao serviceDao = new ServiceDaoImpl();
 
-    /**
-     * Получить все услуги
-     * MASTER и ADMIN видят все услуги (фильтрация не требуется)
-     */
+
     public List<Service> getAllServices() {
         return serviceDao.findAll();
     }
 
-    /**
-     * Получить активные услуги
-     */
+
     public List<Service> getActiveServices() {
         return serviceDao.findActiveServices();
     }
 
-    /**
-     * Поиск услуг
-     */
+
     public List<Service> searchServices(String name, String category, Boolean active) {
         return serviceDao.findByFilters(name, category, active);
     }
 
-    /**
-     * Создать услугу
-     * MASTER не может создавать услуги
-     */
+
     public void createService(Service service) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -58,10 +48,6 @@ public class ServiceService {
         serviceDao.insert(service);
     }
 
-    /**
-     * Обновить услугу
-     * MASTER не может обновлять услуги
-     */
     public void updateService(Service service) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -84,10 +70,7 @@ public class ServiceService {
         serviceDao.update(service);
     }
 
-    /**
-     * Удалить услугу
-     * MASTER не может удалять услуги
-     */
+
     public void deleteService(long serviceId) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -104,10 +87,7 @@ public class ServiceService {
         serviceDao.delete(serviceId);
     }
 
-    /**
-     * Деактивировать услугу
-     * MASTER не может деактивировать услуги
-     */
+
     public void deactivateService(long serviceId) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -117,10 +97,7 @@ public class ServiceService {
         serviceDao.setInactive(serviceId);
     }
 
-    /**
-     * Активировать услугу
-     * MASTER не может активировать услуги
-     */
+
     public void activateService(long serviceId) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -130,9 +107,7 @@ public class ServiceService {
         serviceDao.setActive(serviceId);
     }
 
-    /**
-     * Получить услугу по ID
-     */
+
     public Optional<Service> getServiceById(long serviceId) {
         return serviceDao.findById(serviceId);
     }

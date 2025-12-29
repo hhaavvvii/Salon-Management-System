@@ -1,8 +1,5 @@
 package com.example.salonmanagementsystem.dto;
 
-/**
- * DTO для отображения статистики по услугам
- */
 public class ServiceReportRow {
     private String serviceName;
     private Integer timesBooked;

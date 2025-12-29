@@ -71,9 +71,7 @@ public class LoginController {
         setupRoleHoverEffects();
     }
 
-    /**
-     * Настройка hover эффектов для кнопок выбора роли
-     */
+
     private void setupRoleHoverEffects() {
         // Admin box hover
         adminRoleBox.setOnMouseEntered(e -> {
@@ -102,9 +100,7 @@ public class LoginController {
         });
     }
 
-    /**
-     * Выбрать роль ADMIN
-     */
+
     @FXML
     private void selectAdminRole() {
         selectedRole = Role.ADMIN;
@@ -113,9 +109,7 @@ public class LoginController {
         errorLabel.setVisible(false);
     }
 
-    /**
-     * Выбрать роль MASTER
-     */
+
     @FXML
     private void selectMasterRole() {
         selectedRole = Role.MASTER;

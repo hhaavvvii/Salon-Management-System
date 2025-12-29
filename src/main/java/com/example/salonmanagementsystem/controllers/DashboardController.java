@@ -53,8 +53,7 @@ public class DashboardController {
         }
     }
 
-    // ========== USER INFO ==========
-
+    //USER INFO
     private void loadUserInfo() {
         User currentUser = SessionContext.getCurrentUser();
 
@@ -67,7 +66,7 @@ public class DashboardController {
         }
     }
 
-    // ========== NAVIGATION METHODS ==========
+    //NAVIGATION METHODS
 
     @FXML
     private void openClients() {
@@ -142,11 +141,8 @@ public class DashboardController {
         }
     }
 
-    // ========== UTILITY METHODS ==========
+    //UTILITY METHODS
 
-    /**
-     * Универсальный метод для загрузки FXML в центральную область
-     */
     private void loadContent(String fxmlPath) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
@@ -165,15 +161,13 @@ public class DashboardController {
         }
     }
 
-    /**
-     * Показывает приветственный экран
-     */
+
     private void showWelcomeScreen() {
         javafx.scene.layout.HBox mainBox = new javafx.scene.layout.HBox(40);
         mainBox.setAlignment(javafx.geometry.Pos.CENTER);
         mainBox.setStyle("-fx-padding: 30 40;");
 
-        // ===== ЛЕВАЯ ЧАСТЬ: Логотип =====
+        // ЛЕВАЯ ЧАСТЬ:
         javafx.scene.layout.VBox leftBox = new javafx.scene.layout.VBox(15);
         leftBox.setAlignment(javafx.geometry.Pos.CENTER);
         leftBox.setMinWidth(240);
@@ -191,7 +185,7 @@ public class DashboardController {
             logoImage.setPreserveRatio(true);
             leftBox.getChildren().add(logoImage);
         } catch (Exception e) {
-            // Если изображение не найдено, показываем круг с градиентом как fallback
+
             javafx.scene.shape.Circle logoCircle = new javafx.scene.shape.Circle(80);
             logoCircle.setStyle("-fx-fill: linear-gradient(to bottom right, #7c3aed, #a855f7);");
 
@@ -201,7 +195,7 @@ public class DashboardController {
             leftBox.getChildren().addAll(logoCircle, logoIcon);
         }
 
-        // ===== ПРАВАЯ ЧАСТЬ: Описание =====
+        // ПРАВАЯ ЧАСТЬ
         javafx.scene.layout.VBox rightBox = new javafx.scene.layout.VBox(20);
         rightBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         rightBox.setMaxWidth(500);
@@ -277,9 +271,7 @@ public class DashboardController {
         clearActiveButton();
     }
 
-    /**
-     * Подсвечивает активную кнопку меню
-     */
+
     private void setActiveButton(Button button) {
         // Сбросить стиль предыдущей активной кнопки
         clearActiveButton();
@@ -298,9 +290,7 @@ public class DashboardController {
         );
     }
 
-    /**
-     * Сбрасывает подсветку активной кнопки
-     */
+
     private void clearActiveButton() {
         if (activeButton != null) {
             activeButton.setStyle(
@@ -316,9 +306,7 @@ public class DashboardController {
         }
     }
 
-    /**
-     * Показывает сообщение об ошибке
-     */
+
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");

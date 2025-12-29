@@ -19,11 +19,7 @@ public class ClientService {
     private final ClientDao clientDao = new ClientDaoImpl();
     private final AppointmentDao appointmentDao = new AppointmentDaoImpl();
 
-    /**
-     * Получить всех клиентов с учётом роли
-     * ADMIN видит всех клиентов
-     * MASTER видит только клиентов из своих записей
-     */
+
     public List<Client> getAllClients() {
         List<Client> clients = clientDao.findAll();
 
@@ -35,9 +31,7 @@ public class ClientService {
         return clients;
     }
 
-    /**
-     * Получить активных клиентов с учётом роли
-     */
+
     public List<Client> getActiveClients() {
         List<Client> clients = clientDao.findActiveClients();
 
@@ -49,9 +43,7 @@ public class ClientService {
         return clients;
     }
 
-    /**
-     * Поиск клиентов с учётом роли
-     */
+
     public List<Client> searchClients(String name, String phone, Boolean active) {
         List<Client> clients = clientDao.findByFilters(name, phone, active);
 
@@ -63,10 +55,7 @@ public class ClientService {
         return clients;
     }
 
-    /**
-     * Создать клиента
-     * MASTER не может создавать клиентов
-     */
+
     public void createClient(Client client) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -85,10 +74,7 @@ public class ClientService {
         clientDao.insert(client);
     }
 
-    /**
-     * Обновить клиента
-     * MASTER не может редактировать клиентов
-     */
+
     public void updateClient(Client client) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -111,10 +97,7 @@ public class ClientService {
         clientDao.update(client);
     }
 
-    /**
-     * Деактивировать клиента
-     * MASTER не может деактивировать клиентов
-     */
+
     public void deactivateClient(long clientId) {
         // Проверка прав доступа
         if (SessionContext.isMaster()) {
@@ -124,10 +107,7 @@ public class ClientService {
         clientDao.setInactive(clientId);
     }
 
-    /**
-     * Фильтрация клиентов для MASTER
-     * Оставляет только тех клиентов, у которых есть записи к данному мастеру
-     */
+
     private List<Client> filterClientsForMaster(List<Client> clients) {
         Long currentEmployeeId = SessionContext.getCurrentEmployeeId();
 
